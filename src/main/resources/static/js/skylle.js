@@ -1,7 +1,7 @@
 var skylleApp = angular.module('skylleApp', ['ngAnimate'])
 
 skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope) {
-  var eb = new vertx.EventBus("http://localhost:28080/eventbus");
+  var eb = new vertx.EventBus("/eventbus");
 
   return {
     on: function (eventName, callback) {

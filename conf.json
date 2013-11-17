@@ -1,5 +1,8 @@
-// Example JSON config file
-
 {
-  "foo": "bar"
+  "port": 18080,
+  "db": {
+    "user": "sa",
+    "password": "saPass1",
+    "url": "jdbc:postgresql://localhost/skylle"
+  }
 }

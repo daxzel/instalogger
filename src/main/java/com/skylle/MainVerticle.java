@@ -55,12 +55,31 @@ public class MainVerticle extends Verticle {
 
         Connection conn;
 
-        String userName = "sa";
-        String password = "saPass1";
-        String url = "jdbc:postgresql://localhost/skylle";
+        Integer port = container.config().getInteger("port");
+
+        if (port == null) {
+            port = 18080;
+        }
+
+        JsonObject db = container.config().getObject("db");
+
+        String user;
+        String password;
+        String url;
+
+        if (db != null) {
+            user = db.getString("user");
+            password = db.getString("password");
+            url = db.getString("url");
+        } else {
+            user = "sa";
+            password = "saPass1";
+            url = "jdbc:postgresql://localhost/skylle";
+        }
+
         try {
             Class.forName("org.postgresql.Driver").newInstance();
-            conn = DriverManager.getConnection(url, userName, password);
+            conn = DriverManager.getConnection(url, user, password);
         } catch (Exception e) {
             // For the sake of this tutorial, let's keep exception handling simple
             e.printStackTrace();
@@ -141,7 +160,7 @@ public class MainVerticle extends Verticle {
         permitted.add(new JsonObject());
         sockJSServer.bridge(new JsonObject().putString("prefix", "/eventbus"), permitted, permitted);
 
-        server.listen(28080, "localhost");
+        server.listen(port, "localhost");
 
     }
 }
