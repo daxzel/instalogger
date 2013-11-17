@@ -1,3 +1,3 @@
 Skylle
 ======
-Application for greate work with logs 
+Application for great working with logs 
