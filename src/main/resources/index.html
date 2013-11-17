@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skylle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="/static/images/skylle.ico" itemprop="image">
+    <link rel="shortcut icon" href="/static/images/skylle.ico">
+    <link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="static/css/skylle.css" rel="stylesheet" media="screen">
+    <script src="//code.jquery.com/jquery.js"></script>
+    <script src="static/js/sockjs.js"></script>
+    <script src="static/js/angular.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+    <script src="static/js/vertxbus-2.1.js"></script>
+    <script src="static/js/skylle.js"></script>
+    <script src="static/js/angular-animate.min.js"></script>
+</head>
+<body>
+<div ng-app="skylleApp" class="container skylle-main-container">
+    <div ng-controller="messagesController">
+        <div class="container skylle-controls">
+
+            <div class="btn-group pull-left">
+                <button type="button" ng-class="{'skylle-not-active': !showDanger}" class="btn btn-default btn-danger" ng-click="showDanger = !showDanger" ng-init="showDanger = true">Error</button>
+                <button type="button" ng-class="{'skylle-not-active': !showWarning}" class="btn btn-default btn-warning" ng-click="showWarning = !showWarning" ng-init="showWarning = true">Warning</button>
+                <button type="button" ng-class="{'skylle-not-active': !showInfo}" class="btn btn-default btn-info" ng-click="showInfo = !showInfo" ng-init="showInfo = true">Info</button>
+                <button type="button" ng-class="{'skylle-not-active': !showDebug}" class="btn btn-default btn-debug" ng-click="showDebug = !showDebug" ng-init="showDebug = true">Debug</button>
+            </div>
+
+            <button type="button" class="btn btn-default pull-right" ng-click="clearMessages()">
+                <span class= "glyphicon glyphicon-remove-circle"></span> Clear
+            </button>
+
+            <div class="input-group pull-left skylle-search">
+                <input type="text" class="form-control" placeholder="Search..." ng-model="searchText">
+                <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
+            </div>
+
+
+        </div>
+        <div class="container skylle-messages">
+            <div ng-repeat="message in messages | showMessageLogLevel:this | filter:searchText" ng-switch on="message.log_level">
+                <div ng-switch-when="40000" class="alert alert-danger">[{{message.create_time}}] {{message.text}}</div>
+                <div ng-switch-when="30000" class="alert alert-warning">[{{message.create_time}}] {{message.text}}</div>
+                <div ng-switch-when="20000" class="alert alert-info">[{{message.create_time}}] {{message.text}}</div>
+                <div ng-switch-when="10000" class="alert alert-debug">[{{message.create_time}}] {{message.text}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--<div class="skylle-border-hack"> <div class="container skylle-border-hack-container skylle-main-container"></div></div>-->
+</body>
+</html>
