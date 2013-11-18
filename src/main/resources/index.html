@@ -39,11 +39,9 @@
 
         </div>
         <div class="container skylle-messages" scroll>
-            <div ng-repeat="message in messages | showMessageLogLevel:this | filter:searchText" ng-switch on="message.log_level">
-                <div ng-switch-when="40000" class="alert alert-danger">[{{message.create_time}}] {{message.text}}</div>
-                <div ng-switch-when="30000" class="alert alert-warning">[{{message.create_time}}] {{message.text}}</div>
-                <div ng-switch-when="20000" class="alert alert-info">[{{message.create_time}}] {{message.text}}</div>
-                <div ng-switch-when="10000" class="alert alert-debug">[{{message.create_time}}] {{message.text}}</div>
+            <div ng-repeat="message in messages | showMessageLogLevel:this | filter:searchText" class="alert"
+                  ng-class="getClassOfAlert(message)">
+                [{{message.create_time}}] {{message.text}}
             </div>
         </div>
     </div>

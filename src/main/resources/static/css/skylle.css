@@ -32,7 +32,7 @@
 }
 
 .skylle-main-container {
-    max-width: 900px;
+    max-width: 1200px;
     border-right: 1px solid #e5e5e5;
     border-left: 1px solid #e5e5e5;
 }
@@ -58,31 +58,6 @@
     background-color: #fff;
     border-color: #d58512;
 }
-
-/*
-.btn-warning.skylle-not-active:hover {
-    color: #fff;
-    background-color: #ed9c28;
-    border-color: #d58512;
-}
-
-.btn-info.skylle-not-active:hover {
-    color: #fff;
-    background-color: #39b3d7;
-    border-color: #269abc;
-}
-
-.btn-danger.skylle-not-active:hover {
-    color: #fff;
-    background-color: #d2322d;
-    border-color: #ac2925;
-}
-
-.btn-warning.skylle-not-active {
-    color: #f0ad4e;
-    background-color: #fff;
-    border-color: #eea236;
-}*/
 
 .btn-info.skylle-not-active {
     color: #39b3d7;
@@ -111,7 +86,7 @@
 }
 
 .skylle-search {
-    width: 500px;
+    width: 800px;
     padding-left: 10px;
 }
 

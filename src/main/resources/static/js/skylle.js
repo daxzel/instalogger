@@ -36,7 +36,17 @@ function ($scope, webSocketMessageFactory, $http) {
         $scope.messages = []
     }
 
-    $scope.numberChanged = function() {
+    $scope.getClassOfAlert = function(message) {
+        switch (message.log_level) {
+            case 40000: return 'alert-danger'
+            case 30000: return 'alert-warning'
+            case 20000: return 'alert-info'
+            case 10000: return 'alert-debug'
+        }
+        return ''
+    }
+
+    $scope.bufferNumberChanged = function() {
         $http({
             method: 'GET',
             url: '/messages',
@@ -77,11 +87,11 @@ skylleApp.filter('showMessageLogLevel',[function() {
 skylleApp.directive("scroll", function ($window) {
     return function(scope, element, attrs) {
         angular.element($window).bind("scroll", function() {
-             if (this.pageYOffset >= element.height() - 400) {
+             if (this.pageYOffset >= element.height() - 1000) {
                  if (!scope.loadingNewMessages) {
                     scope.loadingNewMessages = true;
                     scope.bufferNumber += 1;
-                    scope.numberChanged();
+                    scope.bufferNumberChanged();
                  }
              }
         });
