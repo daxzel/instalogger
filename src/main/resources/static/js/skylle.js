@@ -47,7 +47,7 @@ function ($scope, webSocketMessageFactory, $http) {
 skylleApp.filter('showMessageLogLevel',[function() {
     return function(messages, $scope) {
         return messages.filter(function(message, index, array) {
-            if (($scope.showDanger && messages.log_level == 40000) ||
+            if (($scope.showDanger && message.log_level == 40000) ||
                 ($scope.showWarning && message.log_level == 30000) ||
                 ($scope.showInfo && message.log_level == 20000) ||
                 ($scope.showDebug && message.log_level == 10000)) {
