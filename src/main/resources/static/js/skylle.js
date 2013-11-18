@@ -25,6 +25,9 @@ skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory',
 function ($scope, webSocketMessageFactory, $http) {
     $scope.messages = []
 
+    $scope.bufferSize = 100;
+    $scope.bufferNumber = 2;
+
     $scope.clearMessages = function() {
         $http({
             method: 'DELETE',
@@ -33,14 +36,27 @@ function ($scope, webSocketMessageFactory, $http) {
         $scope.messages = []
     }
 
+    $scope.numberChanged = function() {
+        $http({
+            method: 'GET',
+            url: '/messages',
+            params: {bufferNumber: $scope.bufferNumber}
+        }).success(function (result) {
+            $scope.messages = $scope.messages.concat(result);
+            $scope.loadingNewMessages = false;
+        })
+    };
+
     $http({
         method: 'GET',
-        url: '/messages'
+        url: '/messages',
+        params: {bufferNumber: $scope.bufferNumber}
     }).success(function (result) {
-        $scope.messages = result.reverse();;
+        $scope.messages = result.reverse();
          webSocketMessageFactory.on('messageAdded', function (data) {
             $scope.messages.unshift(data);
          });
+         $scope
     });
 }]);
 
@@ -57,4 +73,18 @@ skylleApp.filter('showMessageLogLevel',[function() {
 
     }
 }]);
+
+skylleApp.directive("scroll", function ($window) {
+    return function(scope, element, attrs) {
+        angular.element($window).bind("scroll", function() {
+             if (this.pageYOffset >= element.height() - 400) {
+                 if (!scope.loadingNewMessages) {
+                    scope.loadingNewMessages = true;
+                    scope.bufferNumber += 1;
+                    scope.numberChanged();
+                 }
+             }
+        });
+    };
+});
 

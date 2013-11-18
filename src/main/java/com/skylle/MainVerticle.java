@@ -22,15 +22,11 @@ import java.util.*;
 
 import static com.skylle.entities.generated.Tables.MESSAGE;
 
-
-/*
- * This is a simple Java verticle which receives `ping` messages on the event bus and sends back `pong` replies
- *
- * @author <a href="http://tfox.org">Tim Fox</a>
- */
 public class MainVerticle extends Verticle {
 
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    protected Integer BUFFER_SIZE = 100;
 
 
     protected String formatJSON(Result<Record> result) {
@@ -103,7 +99,9 @@ public class MainVerticle extends Verticle {
         routeMatcher.get("/messages", new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest event) {
-                String result = formatJSON(create.select().from(MESSAGE).fetch());
+                Integer bufferSize = Integer.valueOf(event.params().get("bufferNumber"));
+                String result = formatJSON(create.select()
+                        .from(MESSAGE).limit(bufferSize * BUFFER_SIZE, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
                 event.response().write(result);
                 event.response().end();
