@@ -15,10 +15,9 @@
     <script src="static/js/skylle.js"></script>
     <script src="static/js/angular-animate.min.js"></script>
 </head>
-<body>
-<div ng-app="skylleApp" class="container skylle-main-container">
-    <div ng-controller="messagesController">
-        <div class="container skylle-controls">
+<body ng-app="skylleApp">
+    <div class="container skylle-main-container" ng-controller="messagesController">
+        <div class="container skylle-controls skylle-controls-fixed">
 
             <div class="btn-group pull-left">
                 <button type="button" ng-class="{'skylle-not-active': !showDanger}" class="btn btn-default btn-danger" ng-click="showDanger = !showDanger" ng-init="showDanger = true">Error</button>
@@ -45,7 +44,6 @@
             </div>
         </div>
     </div>
-</div>
 <!--<div class="skylle-border-hack"> <div class="container skylle-border-hack-container skylle-main-container"></div></div>-->
 </body>
 </html>

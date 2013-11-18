@@ -35,12 +35,20 @@
     max-width: 1200px;
     border-right: 1px solid #e5e5e5;
     border-left: 1px solid #e5e5e5;
+    padding-top: 55px;
 }
 
 .skylle-controls {
     padding-bottom: 10px;
     padding-top: 10px;
     border-bottom: 1px solid #e5e5e5;
+}
+
+.skylle-controls-fixed {
+    background: white;
+    position: fixed;
+    background: white;
+    top: 0;
 }
 
 .skylle-messages {
@@ -107,8 +115,6 @@
     background-color: #fff;
     border-color: #888;
 }
-
-html, body {height: 100%;}
 
 .skylle-border-hack {
     height: 100%;

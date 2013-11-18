@@ -26,7 +26,7 @@ function ($scope, webSocketMessageFactory, $http) {
     $scope.messages = []
 
     $scope.bufferSize = 100;
-    $scope.bufferNumber = 2;
+    $scope.bufferNumber = 0;
 
     $scope.clearMessages = function() {
         $http({
@@ -62,7 +62,7 @@ function ($scope, webSocketMessageFactory, $http) {
         url: '/messages',
         params: {bufferNumber: $scope.bufferNumber}
     }).success(function (result) {
-        $scope.messages = result.reverse();
+        $scope.messages = result;
          webSocketMessageFactory.on('messageAdded', function (data) {
             $scope.messages.unshift(data);
          });

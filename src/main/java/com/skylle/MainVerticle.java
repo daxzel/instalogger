@@ -101,7 +101,7 @@ public class MainVerticle extends Verticle {
             public void handle(HttpServerRequest event) {
                 Integer bufferSize = Integer.valueOf(event.params().get("bufferNumber"));
                 String result = formatJSON(create.select()
-                        .from(MESSAGE).limit(bufferSize * BUFFER_SIZE, BUFFER_SIZE).fetch());
+                        .from(MESSAGE).orderBy(MESSAGE.ID.desc()).limit(bufferSize * BUFFER_SIZE, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
                 event.response().write(result);
                 event.response().end();
