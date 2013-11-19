@@ -5,14 +5,16 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.tools.json.JSONValue;
 import org.vertx.java.core.Handler;
+import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.EventBus;
+import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
-import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.sockjs.SockJSServer;
+import org.vertx.java.core.sockjs.SockJSSocket;
 import org.vertx.java.platform.Verticle;
 
 import java.sql.Connection;
@@ -154,9 +156,27 @@ public class MainVerticle extends Verticle {
         server.requestHandler(routeMatcher);
 
         SockJSServer sockJSServer = vertx.createSockJSServer(server);
-        JsonArray permitted = new JsonArray();
-        permitted.add(new JsonObject());
-        sockJSServer.bridge(new JsonObject().putString("prefix", "/eventbus"), permitted, permitted);
+
+        sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
+            @Override
+            public void handle(final SockJSSocket sock) {
+                eventBus.registerHandler("messageAdded", new Handler<Message>() {
+                    @Override
+                    public void handle(Message message) {
+                        if (!sock.writeQueueFull()) {
+                            sock.write(new Buffer(message.body().toString()));
+                        } else {
+                            sock.pause();
+                            sock.drainHandler(new VoidHandler() {
+                                public void handle() {
+                                    sock.resume();
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
 
         server.listen(port, "localhost");
 

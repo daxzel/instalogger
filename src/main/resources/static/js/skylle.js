@@ -1,22 +1,20 @@
 var skylleApp = angular.module('skylleApp', ['ngAnimate'])
 
 skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope) {
-  var eb = new vertx.EventBus("/eventbus");
+
+  var sock = new SockJS("/eventbus");
+
 
   return {
-    on: function (eventName, callback) {
+    on: function (callback) {
       function wrapper(msg) {
         $rootScope.$apply(function() {
-          callback(msg);
+          callback(jQuery.parseJSON(msg.data));
         });
       }
-      eb.onopen = function() {
-         eb.registerHandler(eventName, wrapper);
+      sock.onopen = function() {
+         sock.onmessage = wrapper;
       }
-
-      return function() {
-        eb.removeHandler(eventName, wrapper);
-      };
     },
   };
 }]);
@@ -60,9 +58,9 @@ function ($scope, webSocketMessageFactory, $http) {
         params: {offset: $scope.messages.length}
     }).success(function (result) {
         $scope.messages = result;
-         webSocketMessageFactory.on('messageAdded', function (data) {
+         webSocketMessageFactory.on(function (data) {
             $scope.messages.unshift(data);
-            $scope.message.pop()
+            $scope.messages.pop()
          });
          $scope
     });
