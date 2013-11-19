@@ -1,6 +1,7 @@
 package com.skylle.log4j;
 
 import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.Layout;
 import org.apache.log4j.helpers.LogLog;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -43,13 +44,11 @@ public class SkylleAppender extends AppenderSkeleton {
         String logMessage = event.getRenderedMessage();
         try {
 
-
             URL serverAddress = new URL(skylleUrl + "message?logLevel=" + event.getLevel().toInt());
 
             HttpURLConnection connection = (HttpURLConnection) serverAddress.openConnection();
 
             try {
-
 
                 connection = (HttpURLConnection) serverAddress.openConnection();
                 connection.setRequestMethod("POST");
@@ -64,6 +63,16 @@ public class SkylleAppender extends AppenderSkeleton {
                 DataOutputStream wr = new DataOutputStream(
                         connection.getOutputStream());
                 wr.writeBytes(logMessage);
+
+                String[] s = event.getThrowableStrRep();
+                if (s != null) {
+                    wr.writeChars(Layout.LINE_SEP);
+                    int len = s.length;
+                    for(int i = 0; i < len; i++) {
+                        wr.writeChars(s[i]);
+                        wr.writeChars(Layout.LINE_SEP);
+                    }
+                }
 
                 wr.flush();
                 wr.close();
