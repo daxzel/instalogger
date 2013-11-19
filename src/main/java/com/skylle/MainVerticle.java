@@ -99,9 +99,9 @@ public class MainVerticle extends Verticle {
         routeMatcher.get("/messages", new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest event) {
-                Integer bufferSize = Integer.valueOf(event.params().get("bufferNumber"));
+                Integer offset = Integer.valueOf(event.params().get("offset"));
                 String result = formatJSON(create.select()
-                        .from(MESSAGE).orderBy(MESSAGE.ID.desc()).limit(bufferSize * BUFFER_SIZE, BUFFER_SIZE).fetch());
+                        .from(MESSAGE).orderBy(MESSAGE.ID.desc()).limit(offset , BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
                 event.response().write(result);
                 event.response().end();

@@ -25,9 +25,6 @@ skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory',
 function ($scope, webSocketMessageFactory, $http) {
     $scope.messages = []
 
-    $scope.bufferSize = 100;
-    $scope.bufferNumber = 0;
-
     $scope.clearMessages = function() {
         $http({
             method: 'DELETE',
@@ -46,11 +43,11 @@ function ($scope, webSocketMessageFactory, $http) {
         return ''
     }
 
-    $scope.bufferNumberChanged = function() {
+    $scope.messageScroll = function() {
         $http({
             method: 'GET',
             url: '/messages',
-            params: {bufferNumber: $scope.bufferNumber}
+            params: {offset: $scope.messages.length}
         }).success(function (result) {
             $scope.messages = $scope.messages.concat(result);
             $scope.loadingNewMessages = false;
@@ -60,11 +57,12 @@ function ($scope, webSocketMessageFactory, $http) {
     $http({
         method: 'GET',
         url: '/messages',
-        params: {bufferNumber: $scope.bufferNumber}
+        params: {offset: $scope.messages.length}
     }).success(function (result) {
         $scope.messages = result;
          webSocketMessageFactory.on('messageAdded', function (data) {
             $scope.messages.unshift(data);
+            $scope.message.pop()
          });
          $scope
     });
@@ -90,8 +88,7 @@ skylleApp.directive("scroll", function ($window) {
              if (this.pageYOffset >= element.height() - 1000) {
                  if (!scope.loadingNewMessages) {
                     scope.loadingNewMessages = true;
-                    scope.bufferNumber += 1;
-                    scope.bufferNumberChanged();
+                    scope.messageScroll();
                  }
              }
         });
