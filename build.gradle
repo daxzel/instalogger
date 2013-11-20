@@ -86,8 +86,8 @@ task generateJooq() << {
 
     jdbc.setDriver('org.postgresql.Driver')
     jdbc.setUrl("jdbc:postgresql://localhost/skylle")
-    jdbc.setUser("sa")
-    jdbc.setPassword("saPass1")
+    jdbc.setUser("root")
+    jdbc.setPassword("root")
 
     target.setDirectory("${rootDir}/src/main/java")
     target.setPackageName("com.skylle.entities.generated")
