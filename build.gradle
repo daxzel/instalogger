@@ -1,57 +1,159 @@
-apply from: "gradle/vertx.gradle"
 
-/*
-Usage:
+import org.vertx.java.platform.impl.cli.Starter
 
-./gradlew task_name
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
 
-(or gradlew.bat task_name if you have the misfortune to have to use Windows)
+def cpSeparator = System.getProperty("path.separator")
 
-If no task name is specified then the default task 'assemble' is run
+loadProperties("${System.getProperty('user.homer')}/.gradle/gradle.properties")
 
-Task names are:
+group = modowner
+archivesBaseName = modname
 
-idea - generate a skeleton IntelliJ IDEA project
+defaultTasks = ['assemble']
 
-eclipse - generate a skeleton Eclipse IDE project
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
 
-assemble - builds the outputs, by default this is the module zip file. It can also include a jar file if produceJar
-          in gradle.properties is set to true. Outputs are created in build/libs.
-          if pullInDeps in gradle.properties is set to 'true' then the modules dependencies will be
-          automatically pulled into a nested mods directory inside the module during the build
+project.ext.moduleName = "$modowner~$modname~$version"
 
-copyMod - builds and copies the module to the local 'mods' directory so you can execute vertx runmod (etc)
-          directly from the command line
+configurations {
+    provided
+    testCompile.extendsFrom provided
+}
 
-modZip - creates the module zip into build/libs
+repositories {
+    mavenLocal()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    mavenCentral()
+}
 
-clean - cleans everything up
-
-test - runs the tests. An nice html test report is created in build/reports/tests (index.html)
-
-runMod - runs the module. This is similar to executing vertx runmod from the command line except that it does
-         not use the version of Vert.x installed and on the PATH to run it. Instead it uses the version of Vert.x
-         that the module was compiled and tested against.
-
-runModIDEA - run the module from the project resources in IDEA. This allows you to run the module without building it
-first!
-
-runModEclipse - run the module from the project resources in Eclipse. This allows you to run the module without
-building it  first!
-
-pullInDeps - pulls in all dependencies of the module into a nested module directory
-
-uploadArchives - upload the module zip file (and jar if one has been created) to Nexus. You will need to
-                 configure sonatypeUsername and sonatypePassword in ~/.gradle/gradle.properties.
-
-install - install any jars produced to the local Maven repository (.m2)
-
- */
+dependencies {
+    provided "io.vertx:vertx-core:$vertxVersion"
+    provided "io.vertx:vertx-platform:$vertxVersion"
+    testCompile "junit:junit:$junitVersion"
+    testCompile "io.vertx:testtools:$toolsVersion"
+}
 
 buildscript {
+
     repositories {
+        mavenLocal()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         mavenCentral()
     }
+
+    dependencies {
+        classpath "io.vertx:vertx-core:$vertxVersion"
+        classpath "io.vertx:vertx-platform:$vertxVersion"
+        classpath "io.vertx:vertx-hazelcast:$vertxVersion"
+        classpath files(['src/main/resources'])
+    }
+}
+
+sourceSets {
+    main {
+        compileClasspath = compileClasspath + configurations.provided
+    }
+}
+
+task copyMod( type:Copy, dependsOn: 'classes', description: 'Assemble the module into the local mods directory' ) {
+    into "build/mods/$moduleName"
+    from compileJava
+    from 'src/main/resources'
+    into( 'lib' ) {
+        from configurations.compile
+    }
+}
+
+task modZip( type: Zip, dependsOn: 'pullInDeps', description: 'Package the module .zip file') {
+    group = 'vert.x'
+    classifier = "mod"
+    description = "Assembles a vert.x module"
+    destinationDir = project.file('build/libs')
+    archiveName = "${modname}-${version}" + ".zip"
+    from copyMod
+}
+
+task runModIDEA(dependsOn: copyMod, description: 'Run the module from the resources in IntelliJ') << {
+    runModWithClasspath("src/main/resources/src/main/resources/${cpSeparator}src/test/resources/${cpSeparator}" +
+            "out/production/${project.name}/${cpSeparator}out/test/${project.name}/");
+}
+
+def runModWithClasspath(String classpath) {
+    setSysProps()
+    def args = ['runmod', moduleName]
+    def args2 = runModArgs.split("\\s+")
+    boolean ignoring = false
+    for (String arg: args2) {
+        if (arg == '-cp') {
+            ignoring = true
+        } else if (!ignoring) {
+            args.add(arg)
+        } else {
+            ignoring = false
+        }
+    }
+    args.add('-cp')
+    args.add(classpath)
+    Starter.main(args as String[])
+}
+
+task runMod(dependsOn: copyMod, description: 'Run the module using all the build dependencies (not using installed vertx') << {
+    setSysProps()
+    def args = ['runmod', moduleName]
+    def args2 = runModArgs.split("\\s+")
+    args.addAll(args2)
+    Starter.main(args as String[])
+}
+
+task pullInDeps(dependsOn: copyMod, description: 'Pull in all the module dependencies for the module into the nested mods directory') << {
+    if (pullInDeps == 'true') {
+        setSysProps()
+        def args = ['pulldeps', moduleName]
+        Starter.main(args as String[])
+    }
+}
+
+task fatJar(dependsOn: modZip, description: 'Creates a fat executable jar which contains everything needed to run the module') << {
+    if (createFatJar == 'true') {
+        setSysProps()
+        def args = ['fatjar', moduleName, '-d', 'build/libs']
+        Starter.main(args as String[])
+    }
+}
+
+def setSysProps() {
+    System.setProperty("vertx.clusterManagerFactory", "org.vertx.java.spi.cluster.impl.hazelcast.HazelcastClusterManagerFactory")
+    System.setProperty("vertx.mods", "build/mods")
+}
+
+def loadProperties(String sourceFileName) {
+    def config = new Properties()
+    def propFile = new File(sourceFileName)
+    if (propFile.canRead()) {
+        config.load(new FileInputStream(propFile))
+        for (Map.Entry property in config) {
+            project.ext[property.key] = property.value;
+        }
+    }
+}
+
+plugins.withType(IdeaPlugin) {
+    idea {
+        module {
+            scopes.PROVIDED.plus += configurations.provided
+            scopes.COMPILE.minus += configurations.provided
+            scopes.TEST.minus += configurations.provided
+            scopes.RUNTIME.minus += configurations.provided
+        }
+    }
+}
+
+
+buildscript {
     dependencies {
         classpath 'org.jooq:jooq-meta:3.2.0'
         classpath 'org.jooq:jooq-codegen:3.2.0'
@@ -60,9 +162,6 @@ buildscript {
     }
 }
 
-repositories {
-    maven { url 'https://github.com/keesun/mvn-repo/raw/master' }
-}
 
 import org.jooq.util.GenerationTool
 import org.jooq.util.jaxb.Configuration as JooqConfiguration
@@ -111,66 +210,9 @@ task generateJooq() << {
 }
 
 dependencies {
-  /*
-  Add your module jar dependencies here
-  E.g.
-  compile "com.foo:foo-lib:1.0.1" - for compile time deps - this will end up in your module too!
-  testCompile "com.foo:foo-lib:1.0.1" - for test time deps
-  provided "com.foo:foo-lib:1.0.1" - if you DON'T want it to be packaged in the module zip
-  */
-
-  // If you're creating Groovy compiled verticles you may need the following dependencies
   compile "org.codehaus.groovy:groovy-all:$groovyVersion"
   compile "io.vertx:lang-groovy:$groovyLangModVersion@jar"
   compile "org.jooq:jooq:3.2.0"
   compile "postgresql:postgresql:9.1-901.jdbc4"
-
-
 }
 
-test {
-  /* Configure which tests are included
-  include 'org/foo/**'
-  exclude 'org/boo/**'
-  */
-
-}
-
-/*
-If you're uploading stuff to Maven, Gradle needs to generate a POM.
-Please edit the details below.
- */
-def configurePom(def pom) {
-  pom.project {
-    name rootProject.name
-    description 'Description of your module here'
-    inceptionYear '2013'
-    packaging 'jar'
-
-    url 'Your project url'
-
-    developers {
-      developer {
-        id 'developer id (e.g. github username)'
-        name 'developer name'
-        email 'developer email'
-      }
-    }
-
-    scm {
-      url 'url to your repo - e.g. github repo url'
-    }
-
-    licenses {
-      license {
-        name 'The name of the license used, e.g.: The Apache Software License, Version 2.0'
-        url 'URl to the license, e.g.: http://www.apache.org/licenses/LICENSE-2.0.txt'
-        distribution 'repo'
-      }
-    }
-
-    properties {
-      setProperty('project.build.sourceEncoding', 'UTF8')
-    }
-  }
-}
