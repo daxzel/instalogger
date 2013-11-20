@@ -17,4 +17,20 @@ public enum  LogLevel {
     private LogLevel(int value) {
         this.value = value;
     }
+
+    public static LogLevel fromInteger(int level) {
+        switch(level) {
+            case 10000:
+                return DEBUG_INT;
+            case 20000:
+                return INFO_INT;
+            case 30000:
+                return WARN_INT;
+            case 40000:
+                return ERROR_INT;
+            case 50000:
+                return FATAL_INT;
+        }
+        return null;
+    }
 }

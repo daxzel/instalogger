@@ -1,6 +1,7 @@
 package com.skylle;
 
 
+import com.skylle.entities.enums.LogLevel;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.tools.json.JSONValue;
@@ -70,8 +71,8 @@ public class MainVerticle extends Verticle {
             password = db.getString("password");
             url = db.getString("url");
         } else {
-            user = "sa";
-            password = "saPass1";
+            user ="root";
+            password = "root";
             url = "jdbc:postgresql://localhost/skylle";
         }
 
@@ -160,18 +161,41 @@ public class MainVerticle extends Verticle {
         sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
             @Override
             public void handle(final SockJSSocket sock) {
+                final List list = new ArrayList<Integer>();
+                list.add(LogLevel.DEBUG_INT.value);
+                list.add(LogLevel.ERROR_INT.value);
+                list.add(LogLevel.INFO_INT.value);
+                list.add(LogLevel.WARN_INT.value);
+
+                sock.dataHandler(new Handler<Buffer>() {
+                    @Override
+                    public void handle(Buffer event) {
+                        JsonObject json = new JsonObject(event.toString());
+                        if (json.getString("command").equals("changeConfig")) {
+                            Integer logLevel = json.getInteger("logLevel");
+                            if (list.contains(logLevel)) {
+                                list.remove(logLevel);
+                            } else {
+                                list.add(logLevel);
+                            }
+                        }
+                    }
+                });
+
                 eventBus.registerHandler("messageAdded", new Handler<Message>() {
                     @Override
                     public void handle(Message message) {
-                        if (!sock.writeQueueFull()) {
-                            sock.write(new Buffer(message.body().toString()));
-                        } else {
-                            sock.pause();
-                            sock.drainHandler(new VoidHandler() {
-                                public void handle() {
-                                    sock.resume();
-                                }
-                            });
+                        if (list.contains(((JsonObject)message.body()).getInteger("log_level"))) {
+                            if (!sock.writeQueueFull()) {
+                                sock.write(new Buffer(message.body().toString()));
+                            } else {
+                                sock.pause();
+                                sock.drainHandler(new VoidHandler() {
+                                    public void handle() {
+                                        sock.resume();
+                                    }
+                                });
+                            }
                         }
                     }
                 });

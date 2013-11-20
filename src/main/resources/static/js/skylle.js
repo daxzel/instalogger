@@ -2,11 +2,8 @@ var skylleApp = angular.module('skylleApp', ['ngAnimate'])
 
 skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope) {
 
-  var sock = new SockJS("/eventbus");
-
-
   return {
-    on: function (callback) {
+    on: function (sock, callback) {
       function wrapper(msg) {
         $rootScope.$apply(function() {
           callback(jQuery.parseJSON(msg.data));
@@ -31,6 +28,8 @@ function ($scope, webSocketMessageFactory, $http) {
         $scope.messages = []
     }
 
+    var sock;
+
     $scope.getClassOfAlert = function(message) {
         switch (message.log_level) {
             case 40000: return 'alert-danger'
@@ -52,17 +51,55 @@ function ($scope, webSocketMessageFactory, $http) {
         })
     };
 
+    $scope.changeConfig = function(level) {
+        var refresh = false
+
+        switch (level) {
+            case 40000: $scope.showDanger = !$scope.showDanger;
+                refresh = $scope.showDanger
+                break;
+            case 30000: $scope.showWarning = !$scope.showWarning;
+                refresh = $scope.showWarning
+                break;
+            case 20000: $scope.showInfo = !$scope.showInfo;
+                refresh = $scope.showInfo
+                break;
+            case 10000: $scope.showDebug = !$scope.showDebug;
+                refresh = $scope.showDebug
+        }
+
+        var info = {};
+        info.logLevel = level;
+        info.command = 'changeConfig';
+        sock.send(JSON.stringify(info));
+
+        if (refresh) {
+            $scope.refresh = true;
+            $scope.messages = [];
+            $http({
+                method: 'GET',
+                url: '/messages',
+                params: {offset: $scope.messages.length}
+            }).success(function (result) {
+                $scope.messages = result;
+                $scope.refresh = false;
+            });
+        }
+    };
+
     $http({
         method: 'GET',
         url: '/messages',
         params: {offset: $scope.messages.length}
     }).success(function (result) {
         $scope.messages = result;
-         webSocketMessageFactory.on(function (data) {
-            $scope.messages.unshift(data);
-            $scope.messages.pop()
-         });
-         $scope
+        sock = new SockJS("/eventbus");
+        webSocketMessageFactory.on(sock, function (data) {
+           if (!$scope.refresh) {
+               $scope.messages.unshift(data);
+               $scope.messages.pop();
+           }
+        });
     });
 }]);
 
@@ -84,8 +121,8 @@ skylleApp.directive("scroll", function ($window) {
     return function(scope, element, attrs) {
         angular.element($window).bind("scroll", function() {
              if (this.pageYOffset >= element.height() - 1000) {
-                 if (!scope.loadingNewMessages) {
-                    scope.loadingNewMessages = true;
+                 if (!scope.refresh) {
+                    scope.refresh = true;
                     scope.messageScroll();
                  }
              }

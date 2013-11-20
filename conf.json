@@ -1,8 +1,8 @@
 {
   "port": 18080,
   "db": {
-    "user": "sa",
-    "password": "saPass1",
+    "user": "root",
+    "password": "root",
     "url": "jdbc:postgresql://localhost/skylle"
   }
 }

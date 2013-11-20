@@ -20,10 +20,10 @@
         <div class="container skylle-controls skylle-controls-fixed">
 
             <div class="btn-group pull-left">
-                <button type="button" ng-class="{'skylle-not-active': !showDanger}" class="btn btn-default btn-danger" ng-click="showDanger = !showDanger" ng-init="showDanger = true">Error</button>
-                <button type="button" ng-class="{'skylle-not-active': !showWarning}" class="btn btn-default btn-warning" ng-click="showWarning = !showWarning" ng-init="showWarning = true">Warning</button>
-                <button type="button" ng-class="{'skylle-not-active': !showInfo}" class="btn btn-default btn-info" ng-click="showInfo = !showInfo" ng-init="showInfo = true">Info</button>
-                <button type="button" ng-class="{'skylle-not-active': !showDebug}" class="btn btn-default btn-debug" ng-click="showDebug = !showDebug" ng-init="showDebug = true">Debug</button>
+                <button type="button" ng-class="{'skylle-not-active': !showDanger}" class="btn btn-default btn-danger" ng-click="changeConfig(40000)" ng-init="showDanger = true">Error</button>
+                <button type="button" ng-class="{'skylle-not-active': !showWarning}" class="btn btn-default btn-warning" ng-click="changeConfig(30000)" ng-init="showWarning = true">Warning</button>
+                <button type="button" ng-class="{'skylle-not-active': !showInfo}" class="btn btn-default btn-info" ng-click="changeConfig(20000)" ng-init="showInfo = true">Info</button>
+                <button type="button" ng-class="{'skylle-not-active': !showDebug}" class="btn btn-default btn-debug" ng-click="changeConfig(10000)" ng-init="showDebug = true">Debug</button>
             </div>
 
             <button type="button" class="btn btn-default pull-right" ng-click="clearMessages()">
