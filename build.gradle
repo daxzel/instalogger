@@ -1,6 +1,11 @@
 
 import org.vertx.java.platform.impl.cli.Starter
 
+
+allprojects {
+    ext.programDir = "$rootDir/build/program"
+}
+
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'idea'
@@ -117,12 +122,27 @@ task pullInDeps(dependsOn: copyMod, description: 'Pull in all the module depende
     }
 }
 
-task fatJar(dependsOn: modZip, description: 'Creates a fat executable jar which contains everything needed to run the module') << {
-    if (createFatJar == 'true') {
-        setSysProps()
-        def args = ['fatjar', moduleName, '-d', 'build/libs']
-        Starter.main(args as String[])
+def log4jModule = project('log4j')
+
+configure(log4jModule) {
+    task log4jJar(dependsOn: testClasses, type: Jar) {
+        destinationDir = file(programDir+ '/integration')
     }
+}
+
+task copyExecutable( type:Copy, description: 'Copy executable files (exe and sh) to result dir' ) {
+    into programDir
+    from "program"
+}
+
+task fatJar(dependsOn: modZip, description: 'Creates a fat executable jar which contains everything needed to run the module') << {
+    setSysProps()
+    def args = ['fatjar', moduleName, '-d', programDir]
+    Starter.main(args as String[])
+}
+
+task assembleApp(dependsOn: [fatJar, copyExecutable, log4jModule.log4jJar]) {
+
 }
 
 def setSysProps() {
