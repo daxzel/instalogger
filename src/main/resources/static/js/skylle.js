@@ -47,7 +47,7 @@ function ($scope, webSocketMessageFactory, $http) {
             params: {offset: $scope.messages.length}
         }).success(function (result) {
             $scope.messages = $scope.messages.concat(result);
-            $scope.loadingNewMessages = false;
+            $scope.refresh = false;
         })
     };
 
@@ -97,7 +97,9 @@ function ($scope, webSocketMessageFactory, $http) {
         webSocketMessageFactory.on(sock, function (data) {
            if (!$scope.refresh) {
                $scope.messages.unshift(data);
+               if ($scope.messages.length > 100) {
                $scope.messages.pop();
+               }
            }
         });
     });
