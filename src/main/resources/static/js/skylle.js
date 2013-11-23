@@ -1,5 +1,17 @@
 var skylleApp = angular.module('skylleApp', ['ngAnimate','ngSanitize'])
 
+if (typeof String.prototype.startsWith != 'function') {
+  String.prototype.startsWith = function (str){
+    return this.indexOf(str) == 0;
+  };
+}
+
+if (typeof String.prototype.contains != 'function') {
+  String.prototype.contains = function (str){
+    return this.indexOf(str) != -1;
+  };
+}
+
 skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope) {
 
   return {
@@ -21,8 +33,37 @@ function ($scope, webSocketMessageFactory, $http, $sce) {
     $scope.messages = []
 
     $scope.showMessage = function(message) {
-        return $sce.trustAsHtml('[' + message.create_time + '] ' +
-            message.text.replace(/\n/g, "<br/>").replace(/\t/g, "            "));
+        strings = message.text.split('\n');
+        result = []
+        result.push('[')
+        result.push(message.create_time)
+        result.push('] ')
+        result.push(strings[0])
+
+        for (var i=1; i<strings.length; i++) {
+            result.push("<br/>")
+            if (strings[i].startsWith("\tat ")) {
+                result.push("<b>             ")
+                if (strings[i].contains('thesis')) {
+                    result.push('<span style=\"color: green\">')
+                    result.push(strings[i])
+                    result.push('</span>')
+                } else {
+                    if (strings[i].contains('cuba')) {
+                        result.push('<span style=\"color: blue\">')
+                        result.push(strings[i])
+                        result.push('</span>')
+                    } else {
+                        result.push(strings[i])
+                    }
+                }
+                result.push("</b>")
+            } else {
+                result.push(strings[i])
+            }
+        }
+
+        return $sce.trustAsHtml(result.join(""));
     }
 
     $scope.clearMessages = function() {
