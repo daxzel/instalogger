@@ -1,4 +1,4 @@
-var skylleApp = angular.module('skylleApp', ['ngAnimate'])
+var skylleApp = angular.module('skylleApp', ['ngAnimate','ngSanitize'])
 
 skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope) {
 
@@ -16,9 +16,14 @@ skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope
   };
 }]);
 
-skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http',
-function ($scope, webSocketMessageFactory, $http) {
+skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http', '$sce',
+function ($scope, webSocketMessageFactory, $http, $sce) {
     $scope.messages = []
+
+    $scope.showMessage = function(message) {
+        return $sce.trustAsHtml('[' + message.create_time + '] ' +
+            message.text.replace(/\n/g, "<br/>").replace(/\t/g, "            "));
+    }
 
     $scope.clearMessages = function() {
         $http({
@@ -95,12 +100,12 @@ function ($scope, webSocketMessageFactory, $http) {
         $scope.messages = result;
         sock = new SockJS("/eventbus");
         webSocketMessageFactory.on(sock, function (data) {
-           if (!$scope.refresh) {
-               $scope.messages.unshift(data);
-               if ($scope.messages.length > 100) {
-               $scope.messages.pop();
-               }
-           }
+        if (!$scope.refresh) {
+            $scope.messages.unshift(data);
+            if ($scope.messages.length > 100) {
+                $scope.messages.pop();
+            }
+        }
         });
     });
 }]);

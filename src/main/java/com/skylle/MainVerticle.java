@@ -128,7 +128,8 @@ public class MainVerticle extends Verticle {
                     @Override
                     public void handle(Buffer bufferEvent) {
                         Integer logLevel = Integer.valueOf(event.params().get("logLevel"));
-                        String text = bufferEvent.toString();
+                        short length = bufferEvent.getShort(0);
+                        String text = bufferEvent.getString(2, length);
                         JsonObject jsonObject = new JsonObject();
                         jsonObject.putString("text", text);
                         jsonObject.putNumber("log_level", logLevel);

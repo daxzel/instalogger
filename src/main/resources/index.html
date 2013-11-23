@@ -12,12 +12,13 @@
     <script src="static/js/angular.min.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
     <script src="static/js/vertxbus-2.1.js"></script>
-    <script src="static/js/skylle.js"></script>
+    <script src="static/js/angular-sanitize.min.js"></script>
     <script src="static/js/angular-animate.min.js"></script>
+    <script src="static/js/skylle.js"></script>
 </head>
 <body ng-app="skylleApp">
-    <div class="container skylle-main-container" ng-controller="messagesController">
-        <div class="container skylle-controls skylle-controls-fixed">
+    <div class="skylle-main-container" ng-controller="messagesController">
+        <div class="skylle-fluid-container skylle-controls skylle-controls-fixed">
 
             <div class="btn-group pull-left">
                 <button type="button" ng-class="{'skylle-not-active': !showDanger}" class="btn btn-default btn-danger" ng-click="changeConfig(40000)" ng-init="showDanger = true">Error</button>
@@ -37,11 +38,9 @@
 
 
         </div>
-        <div class="container skylle-messages" scroll>
+        <div class="skylle-fluid-container skylle-messages" scroll>
             <div ng-repeat="message in messages | showMessageLogLevel:this | filter:searchText" class="alert"
-                  ng-class="getClassOfAlert(message)">
-                [{{message.create_time}}] {{message.text}}
-            </div>
+                  ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
         </div>
     </div>
 <!--<div class="skylle-border-hack"> <div class="container skylle-border-hack-container skylle-main-container"></div></div>-->

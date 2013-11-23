@@ -54,7 +54,6 @@ public class SkylleAppender extends AppenderSkeleton {
                 connection.setRequestMethod("POST");
                 connection.setReadTimeout(10000);
 
-
                 connection.setUseCaches(false);
                 connection.setDoInput(true);
                 connection.setDoOutput(true);
@@ -62,17 +61,20 @@ public class SkylleAppender extends AppenderSkeleton {
                 //Send request
                 DataOutputStream wr = new DataOutputStream(
                         connection.getOutputStream());
-                wr.writeBytes(logMessage);
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(logMessage);
 
                 String[] s = event.getThrowableStrRep();
                 if (s != null) {
-                    wr.writeChars(Layout.LINE_SEP);
+                    stringBuilder.append(Layout.LINE_SEP);
                     int len = s.length;
                     for(int i = 0; i < len; i++) {
-                        wr.writeChars(s[i]);
-                        wr.writeChars(Layout.LINE_SEP);
+                        stringBuilder.append(s[i]);
+                        stringBuilder.append(Layout.LINE_SEP);
                     }
                 }
+
+                wr.writeUTF(stringBuilder.toString());
 
                 wr.flush();
                 wr.close();

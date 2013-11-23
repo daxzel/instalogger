@@ -125,9 +125,11 @@ task pullInDeps(dependsOn: copyMod, description: 'Pull in all the module depende
 def log4jModule = project('skylle-log4j')
 
 configure(log4jModule) {
-    task log4jJar(dependsOn: testClasses, type: Jar) {
-        destinationDir = file(programDir+ '/integration')
-        from 'src'
+    apply plugin: 'java'
+
+    task log4jJar(dependsOn: classes, type: Jar) {
+        destinationDir = file(programDir + '/integration')
+        from log4jModule.sourceSets.main.output.classesDir
     }
 }
 
