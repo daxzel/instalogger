@@ -237,5 +237,6 @@ dependencies {
   compile "io.vertx:lang-groovy:$groovyLangModVersion@jar"
   compile "org.jooq:jooq:3.2.0"
   compile "postgresql:postgresql:9.1-901.jdbc4"
+  compile "com.google.guava:guava:15.0"
 }
 

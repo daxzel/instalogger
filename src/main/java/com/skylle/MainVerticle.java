@@ -54,36 +54,25 @@ public class MainVerticle extends Verticle {
 
         Connection conn;
 
-        Integer port = container.config().getInteger("port");
-
-        if (port == null) {
-            port = 18080;
-        }
-
-        JsonObject db = container.config().getObject("db");
-
-        String user;
-        String password;
-        String url;
-
-        if (db != null) {
-            user = db.getString("user");
-            password = db.getString("password");
-            url = db.getString("url");
-        } else {
-            user ="root";
-            password = "root";
-            url = "jdbc:postgresql://localhost/skylle";
-        }
+        Config conf = Config.fromJson(container.config());
 
         try {
             Class.forName("org.postgresql.Driver").newInstance();
-            conn = DriverManager.getConnection(url, user, password);
+            conn = DriverManager.getConnection(conf.url, conf.user, conf.password);
         } catch (Exception e) {
-            // For the sake of this tutorial, let's keep exception handling simple
             e.printStackTrace();
             return;
         }
+
+        DBUpdater dbUpdater = new DBUpdater(conn);
+
+        try {
+            dbUpdater.create();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
 
         final EventBus eventBus = vertx.eventBus();
 
@@ -203,7 +192,6 @@ public class MainVerticle extends Verticle {
             }
         });
 
-        server.listen(port, "localhost");
-
+        server.listen(conf.port, "localhost");
     }
 }
