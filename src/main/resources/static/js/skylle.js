@@ -1,4 +1,4 @@
-var skylleApp = angular.module('skylleApp', ['ngAnimate','ngSanitize'])
+var skylleApp = angular.module('skylleApp', ['ngAnimate', 'ngSanitize', 'ngResource'])
 
 if (typeof String.prototype.startsWith != 'function') {
   String.prototype.startsWith = function (str){
@@ -28,8 +28,8 @@ skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope
   };
 }]);
 
-skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http', '$sce',
-function ($scope, webSocketMessageFactory, $http, $sce) {
+skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http', '$sce', '$resource',
+function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
     $scope.messages = []
 
     $scope.showMessage = function(message) {
@@ -97,29 +97,52 @@ function ($scope, webSocketMessageFactory, $http, $sce) {
         })
     };
 
+    $scope.showDanger = true;
+    $scope.showWarning = true;
+    $scope.showInfo = true;
+    $scope.showDebug = true;
+
+    $http({
+        method: 'GET',
+        url: '/settings',
+    }).success(function (result) {
+        for (var i=0; i< result.length; i++) {
+            switch (result[i].id) {
+                case '40000': $scope.showDanger = result[i].value == 'true'
+                    break;
+                case '30000': $scope.showWarning = result[i].value == 'true'
+                    break;
+                case '20000': $scope.showInfo = result[i].value == 'true'
+                    break;
+                case '10000': $scope.showDebug = result[i].value == 'true'
+            }
+        }
+    });
+
     $scope.changeConfig = function(level) {
-        var refresh = false
+        var enable = false
 
         switch (level) {
             case 40000: $scope.showDanger = !$scope.showDanger;
-                refresh = $scope.showDanger
+                enable = $scope.showDanger
                 break;
             case 30000: $scope.showWarning = !$scope.showWarning;
-                refresh = $scope.showWarning
+                enable = $scope.showWarning
                 break;
             case 20000: $scope.showInfo = !$scope.showInfo;
-                refresh = $scope.showInfo
+                enable = $scope.showInfo
                 break;
             case 10000: $scope.showDebug = !$scope.showDebug;
-                refresh = $scope.showDebug
+                enable = $scope.showDebug
         }
 
         var info = {};
-        info.logLevel = level;
+        info.id = level;
+        info.value = enable;
         info.command = 'changeConfig';
         sock.send(JSON.stringify(info));
 
-        if (refresh) {
+        if (enable) {
             $scope.refresh = true;
             $scope.messages = [];
             $http({

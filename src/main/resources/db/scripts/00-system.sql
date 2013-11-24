@@ -1,5 +1,5 @@
 CREATE TABLE system (
-    id varchar(100) NOT NULL,
+    id varchar(100) PRIMARY KEY,
     value varchar(100) NOT NULL
 );
 

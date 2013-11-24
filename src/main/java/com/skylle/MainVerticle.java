@@ -1,10 +1,11 @@
 package com.skylle;
 
 
-import com.skylle.entities.enums.LogLevel;
-import org.jooq.*;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.Result;
+import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
-import org.jooq.tools.json.JSONValue;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.buffer.Buffer;
@@ -21,34 +22,16 @@ import org.vertx.java.platform.Verticle;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
 
 import static com.skylle.entities.generated.Tables.MESSAGE;
+import static com.skylle.entities.generated.Tables.SETTING;
 
 public class MainVerticle extends Verticle {
 
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     protected Integer BUFFER_SIZE = 100;
-
-
-    protected String formatJSON(Result<Record> result) {
-        List<Map<String, Object>> list = new ArrayList<>();
-
-        for (Record record : result) {
-            Map<String, Object> jRecord = new HashMap<>();
-            for (Field<?> field : result.fields()) {
-                Object value = record.getValue(field);
-                if (value instanceof Date) {
-                    value = formatter.format(value);
-                }
-                jRecord.put(field.getName(), value);
-            }
-            list.add(jRecord);
-
-        }
-        return JSONValue.toJSONString(list);
-    }
 
     public void start() {
 
@@ -88,12 +71,40 @@ public class MainVerticle extends Verticle {
             }
         });
 
+        routeMatcher.get("/settings", new Handler<HttpServerRequest>() {
+            @Override
+            public void handle(HttpServerRequest event) {
+                String result = JsonHelper.formatJSON(create.select().from(SETTING).fetch());
+                event.response().setChunked(true);
+                event.response().write(result);
+                event.response().end();
+                event.response().close();
+            }
+        });
+
+        routeMatcher.get("/setting/:id", new Handler<HttpServerRequest>() {
+            @Override
+            public void handle(HttpServerRequest req) {
+                Result<Record> settings = create.select().from(SETTING).
+                        where(SETTING.ID.equal(req.params().get("id"))).fetch();
+                String result = "";
+                if (settings.size() == 1) {
+                    result = JsonHelper.formatJSON(settings.get(0));
+                }
+
+                req.response().setChunked(true);
+                req.response().write(result);
+                req.response().end();
+                req.response().close();
+            }
+        });
+
         routeMatcher.get("/messages", new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest event) {
                 Integer offset = Integer.valueOf(event.params().get("offset"));
-                String result = formatJSON(create.select()
-                        .from(MESSAGE).orderBy(MESSAGE.ID.desc()).limit(offset , BUFFER_SIZE).fetch());
+                String result = JsonHelper.formatJSON(create.select()
+                        .from(MESSAGE).orderBy(MESSAGE.ID.desc()).limit(offset, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
                 event.response().write(result);
                 event.response().end();
@@ -151,22 +162,19 @@ public class MainVerticle extends Verticle {
         sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
             @Override
             public void handle(final SockJSSocket sock) {
-                final List list = new ArrayList<Integer>();
-                list.add(LogLevel.DEBUG_INT.value);
-                list.add(LogLevel.ERROR_INT.value);
-                list.add(LogLevel.INFO_INT.value);
-                list.add(LogLevel.WARN_INT.value);
+                final ShowLevelSettings settings = new ShowLevelSettings(create);
 
                 sock.dataHandler(new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer event) {
                         JsonObject json = new JsonObject(event.toString());
                         if (json.getString("command").equals("changeConfig")) {
-                            Integer logLevel = json.getInteger("logLevel");
-                            if (list.contains(logLevel)) {
-                                list.remove(logLevel);
+                            Integer logLevel = json.getInteger("id");
+                            boolean value = json.getBoolean("value");
+                            if (value) {
+                                settings.enableShowing(logLevel);
                             } else {
-                                list.add(logLevel);
+                                settings.disableShowing(logLevel);
                             }
                         }
                     }
@@ -175,7 +183,7 @@ public class MainVerticle extends Verticle {
                 eventBus.registerHandler("messageAdded", new Handler<Message>() {
                     @Override
                     public void handle(Message message) {
-                        if (list.contains(((JsonObject)message.body()).getInteger("log_level"))) {
+                        if (settings.needShow(((JsonObject) message.body()).getInteger("log_level"))) {
                             if (!sock.writeQueueFull()) {
                                 sock.write(new Buffer(message.body().toString()));
                             } else {

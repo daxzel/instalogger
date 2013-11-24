@@ -17,4 +17,14 @@ public class Tables {
 	 * The table public.message
 	 */
 	public static final com.skylle.entities.generated.tables.Message MESSAGE = com.skylle.entities.generated.tables.Message.MESSAGE;
+
+	/**
+	 * The table public.setting
+	 */
+	public static final com.skylle.entities.generated.tables.Setting SETTING = com.skylle.entities.generated.tables.Setting.SETTING;
+
+	/**
+	 * The table public.system
+	 */
+	public static final com.skylle.entities.generated.tables.System SYSTEM = com.skylle.entities.generated.tables.System.SYSTEM;
 }
