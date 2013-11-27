@@ -22,8 +22,8 @@ public class Config {
 
         Integer port = conf.getInteger("port");
 
-        if (port == null) {
-            result.port = 18080;
+        if (port != null) {
+            result.port = port;
         }
 
         JsonObject db = conf.getObject("db");
