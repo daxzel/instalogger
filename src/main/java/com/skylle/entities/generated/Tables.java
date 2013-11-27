@@ -19,6 +19,11 @@ public class Tables {
 	public static final com.skylle.entities.generated.tables.Message MESSAGE = com.skylle.entities.generated.tables.Message.MESSAGE;
 
 	/**
+	 * The table public.server
+	 */
+	public static final com.skylle.entities.generated.tables.Server SERVER = com.skylle.entities.generated.tables.Server.SERVER;
+
+	/**
 	 * The table public.setting
 	 */
 	public static final com.skylle.entities.generated.tables.Setting SETTING = com.skylle.entities.generated.tables.Setting.SETTING;

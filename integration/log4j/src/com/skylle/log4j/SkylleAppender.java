@@ -23,10 +23,19 @@ public class SkylleAppender extends AppenderSkeleton {
 
     protected String skylleUrl = DEFAULT_SKYLLE_URL;
 
+    protected String serverName = null;
+
+    public String getServerName() {
+        return serverName;
+    }
+
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
+    }
+
     public String getSkylleUrl() {
         return skylleUrl;
     }
-
 
     public void setSkylleUrl(String skylleUrl) {
         this.skylleUrl = skylleUrl;
@@ -44,7 +53,12 @@ public class SkylleAppender extends AppenderSkeleton {
         String logMessage = event.getRenderedMessage();
         try {
 
-            URL serverAddress = new URL(skylleUrl + "message?logLevel=" + event.getLevel().toInt());
+            String url = skylleUrl + "message?logLevel=" + event.getLevel().toInt();
+            if (serverName != null) {
+                url += "&serverName=" + serverName;
+            }
+
+            URL serverAddress = new URL(url);
 
             HttpURLConnection connection = (HttpURLConnection) serverAddress.openConnection();
 
@@ -68,7 +82,7 @@ public class SkylleAppender extends AppenderSkeleton {
                 if (s != null) {
                     stringBuilder.append(Layout.LINE_SEP);
                     int len = s.length;
-                    for(int i = 0; i < len; i++) {
+                    for (int i = 0; i < len; i++) {
                         stringBuilder.append(s[i]);
                         stringBuilder.append(Layout.LINE_SEP);
                     }

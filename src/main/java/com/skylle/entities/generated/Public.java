@@ -11,7 +11,7 @@ package com.skylle.entities.generated;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Public extends org.jooq.impl.SchemaImpl {
 
-	private static final long serialVersionUID = -1023405724;
+	private static final long serialVersionUID = 76598666;
 
 	/**
 	 * The singleton instance of <code>public</code>
@@ -34,7 +34,8 @@ public class Public extends org.jooq.impl.SchemaImpl {
 
 	private final java.util.List<org.jooq.Sequence<?>> getSequences0() {
 		return java.util.Arrays.<org.jooq.Sequence<?>>asList(
-			com.skylle.entities.generated.Sequences.MESSAGE_ID_SEQ);
+			com.skylle.entities.generated.Sequences.MESSAGE_ID_SEQ,
+			com.skylle.entities.generated.Sequences.SERVER_ID_SEQ);
 	}
 
 	@Override
@@ -47,6 +48,7 @@ public class Public extends org.jooq.impl.SchemaImpl {
 	private final java.util.List<org.jooq.Table<?>> getTables0() {
 		return java.util.Arrays.<org.jooq.Table<?>>asList(
 			com.skylle.entities.generated.tables.Message.MESSAGE,
+			com.skylle.entities.generated.tables.Server.SERVER,
 			com.skylle.entities.generated.tables.Setting.SETTING,
 			com.skylle.entities.generated.tables.System.SYSTEM);
 	}

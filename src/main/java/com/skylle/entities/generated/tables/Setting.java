@@ -11,7 +11,7 @@ package com.skylle.entities.generated.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Setting extends org.jooq.impl.TableImpl<com.skylle.entities.generated.tables.records.SettingRecord> {
 
-	private static final long serialVersionUID = -1821844375;
+	private static final long serialVersionUID = -604844083;
 
 	/**
 	 * The singleton instance of <code>public.setting</code>
@@ -48,6 +48,22 @@ public class Setting extends org.jooq.impl.TableImpl<com.skylle.entities.generat
 	 */
 	public Setting(java.lang.String alias) {
 		super(alias, com.skylle.entities.generated.Public.PUBLIC, com.skylle.entities.generated.tables.Setting.SETTING);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.SettingRecord> getPrimaryKey() {
+		return com.skylle.entities.generated.Keys.SETTING_PKEY;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public java.util.List<org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.SettingRecord>> getKeys() {
+		return java.util.Arrays.<org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.SettingRecord>>asList(com.skylle.entities.generated.Keys.SETTING_PKEY);
 	}
 
 	/**

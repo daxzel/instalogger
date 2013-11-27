@@ -1,6 +1,8 @@
 package com.skylle;
 
-
+import com.skylle.helpers.Config;
+import com.skylle.helpers.DBUpdater;
+import com.skylle.helpers.JsonHelper;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -25,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static com.skylle.entities.generated.Tables.MESSAGE;
+import static com.skylle.entities.generated.Tables.SERVER;
 import static com.skylle.entities.generated.Tables.SETTING;
 
 public class MainVerticle extends Verticle {
@@ -59,10 +62,12 @@ public class MainVerticle extends Verticle {
 
         final EventBus eventBus = vertx.eventBus();
 
-        final DSLContext create = DSL.using(conn, SQLDialect.POSTGRES);
-
+        final DSLContext dslContext = DSL.using(conn, SQLDialect.POSTGRES);
 
         RouteMatcher routeMatcher = new RouteMatcher();
+
+        RESTCreator creator = new RESTCreator(routeMatcher, dslContext);
+
 
         routeMatcher.get("/", new Handler<HttpServerRequest>() {
             @Override
@@ -71,21 +76,17 @@ public class MainVerticle extends Verticle {
             }
         });
 
-        routeMatcher.get("/settings", new Handler<HttpServerRequest>() {
-            @Override
-            public void handle(HttpServerRequest event) {
-                String result = JsonHelper.formatJSON(create.select().from(SETTING).fetch());
-                event.response().setChunked(true);
-                event.response().write(result);
-                event.response().end();
-                event.response().close();
-            }
-        });
+        creator.createGetAll(SETTING, "/settings");
+        creator.createGetAll(SERVER, "/servers");
+
+        creator.createGet(SERVER, "/server", SERVER.ID);
+
+
 
         routeMatcher.get("/setting/:id", new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest req) {
-                Result<Record> settings = create.select().from(SETTING).
+                Result<Record> settings = dslContext.select().from(SETTING).
                         where(SETTING.ID.equal(req.params().get("id"))).fetch();
                 String result = "";
                 if (settings.size() == 1) {
@@ -102,9 +103,19 @@ public class MainVerticle extends Verticle {
         routeMatcher.get("/messages", new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest event) {
-                Integer offset = Integer.valueOf(event.params().get("offset"));
-                String result = JsonHelper.formatJSON(create.select()
-                        .from(MESSAGE).orderBy(MESSAGE.ID.desc()).limit(offset, BUFFER_SIZE).fetch());
+                String offsetParam = event.params().get("offset");
+                String serverIdParam = event.params().get("server_id");
+                Integer offset = 0;
+                Integer serverId = null;
+                if (offsetParam != null) {
+                    offset = Integer.valueOf(offsetParam);
+                }
+                if (serverIdParam != null) {
+                    serverId = Integer.valueOf(serverIdParam);
+                }
+                String result = JsonHelper.formatJSON(dslContext.select().from(MESSAGE)
+                        .where(MESSAGE.SERVER_ID.equal(serverId))
+                        .orderBy(MESSAGE.ID.desc()).limit(offset, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
                 event.response().write(result);
                 event.response().end();
@@ -115,11 +126,12 @@ public class MainVerticle extends Verticle {
         routeMatcher.delete("/messages/delete_all", new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest event) {
-                create.deleteQuery(MESSAGE).execute();
+                dslContext.deleteQuery(MESSAGE).execute();
                 event.response().end();
                 event.response().close();
             }
         });
+
 
         routeMatcher.post("/message", new Handler<HttpServerRequest>() {
             @Override
@@ -127,6 +139,20 @@ public class MainVerticle extends Verticle {
                 event.bodyHandler(new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer bufferEvent) {
+
+                        String serverName = event.params().get("serverName");
+                        Integer serverId = null;
+                        if (serverName != null) {
+                            Result<Record> servers = dslContext.select()
+                                    .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
+                            if (servers.isEmpty()) {
+                                dslContext.insertInto(SERVER, SERVER.NAME).values(serverName).execute();
+                                servers = dslContext.select()
+                                        .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
+                            }
+                            serverId = servers.get(0).getValue(SERVER.ID);
+                        }
+
                         Integer logLevel = Integer.valueOf(event.params().get("logLevel"));
                         short length = bufferEvent.getShort(0);
                         String text = bufferEvent.getString(2, length);
@@ -134,8 +160,10 @@ public class MainVerticle extends Verticle {
                         jsonObject.putString("text", text);
                         jsonObject.putNumber("log_level", logLevel);
                         jsonObject.putString("create_time", formatter.format(new Date()));
+                        jsonObject.putString("server_id", serverId != null ? serverId.toString() : null);
                         eventBus.publish("messageAdded", jsonObject);
-                        create.insertInto(MESSAGE, MESSAGE.TEXT, MESSAGE.LOG_LEVEL).values(text, logLevel).execute();
+                        dslContext.insertInto(MESSAGE, MESSAGE.TEXT, MESSAGE.LOG_LEVEL, MESSAGE.SERVER_ID)
+                                .values(text, logLevel, serverId).execute();
                         event.response().setChunked(true);
                         event.response().write("ok");
                         event.response().end();
@@ -162,7 +190,7 @@ public class MainVerticle extends Verticle {
         sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
             @Override
             public void handle(final SockJSSocket sock) {
-                final ShowLevelSettings settings = new ShowLevelSettings(create);
+                final ShowLevelSettings settings = new ShowLevelSettings(dslContext);
 
                 sock.dataHandler(new Handler<Buffer>() {
                     @Override

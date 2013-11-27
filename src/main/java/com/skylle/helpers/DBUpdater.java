@@ -1,4 +1,4 @@
-package com.skylle;
+package com.skylle.helpers;
 
 import com.google.common.io.Files;
 import com.google.common.io.Resources;

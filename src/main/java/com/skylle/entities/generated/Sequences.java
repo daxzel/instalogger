@@ -17,4 +17,9 @@ public class Sequences {
 	 * The sequence <code>public.message_id_seq</code>
 	 */
 	public static final org.jooq.Sequence<java.lang.Long> MESSAGE_ID_SEQ = new org.jooq.impl.SequenceImpl<java.lang.Long>("message_id_seq", com.skylle.entities.generated.Public.PUBLIC, org.jooq.impl.SQLDataType.BIGINT.nullable(false));
+
+	/**
+	 * The sequence <code>public.server_id_seq</code>
+	 */
+	public static final org.jooq.Sequence<java.lang.Long> SERVER_ID_SEQ = new org.jooq.impl.SequenceImpl<java.lang.Long>("server_id_seq", com.skylle.entities.generated.Public.PUBLIC, org.jooq.impl.SQLDataType.BIGINT.nullable(false));
 }

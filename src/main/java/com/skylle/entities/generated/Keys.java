@@ -19,17 +19,22 @@ public class Keys {
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.Identity<com.skylle.entities.generated.tables.records.MessageRecord, java.lang.Integer> IDENTITY_MESSAGE = Identities0.IDENTITY_MESSAGE;
+	public static final org.jooq.Identity<com.skylle.entities.generated.tables.records.ServerRecord, java.lang.Integer> IDENTITY_SERVER = Identities0.IDENTITY_SERVER;
 
 	// -------------------------------------------------------------------------
 	// UNIQUE and PRIMARY KEY definitions
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.MessageRecord> MESSAGE_PKEY = UniqueKeys0.MESSAGE_PKEY;
+	public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.ServerRecord> SERVER_PKEY = UniqueKeys0.SERVER_PKEY;
+	public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.SettingRecord> SETTING_PKEY = UniqueKeys0.SETTING_PKEY;
+	public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.SystemRecord> SYSTEM_PKEY = UniqueKeys0.SYSTEM_PKEY;
 
 	// -------------------------------------------------------------------------
 	// FOREIGN KEY definitions
 	// -------------------------------------------------------------------------
 
+	public static final org.jooq.ForeignKey<com.skylle.entities.generated.tables.records.MessageRecord, com.skylle.entities.generated.tables.records.ServerRecord> MESSAGE__MESSAGE_SERVER = ForeignKeys0.MESSAGE__MESSAGE_SERVER;
 
 	// -------------------------------------------------------------------------
 	// [#1459] distribute members to avoid static initialisers > 64kb
@@ -37,9 +42,17 @@ public class Keys {
 
 	private static class Identities0 extends org.jooq.impl.AbstractKeys {
 		public static org.jooq.Identity<com.skylle.entities.generated.tables.records.MessageRecord, java.lang.Integer> IDENTITY_MESSAGE = createIdentity(com.skylle.entities.generated.tables.Message.MESSAGE, com.skylle.entities.generated.tables.Message.MESSAGE.ID);
+		public static org.jooq.Identity<com.skylle.entities.generated.tables.records.ServerRecord, java.lang.Integer> IDENTITY_SERVER = createIdentity(com.skylle.entities.generated.tables.Server.SERVER, com.skylle.entities.generated.tables.Server.SERVER.ID);
 	}
 
 	private static class UniqueKeys0 extends org.jooq.impl.AbstractKeys {
 		public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.MessageRecord> MESSAGE_PKEY = createUniqueKey(com.skylle.entities.generated.tables.Message.MESSAGE, com.skylle.entities.generated.tables.Message.MESSAGE.ID);
+		public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.ServerRecord> SERVER_PKEY = createUniqueKey(com.skylle.entities.generated.tables.Server.SERVER, com.skylle.entities.generated.tables.Server.SERVER.ID);
+		public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.SettingRecord> SETTING_PKEY = createUniqueKey(com.skylle.entities.generated.tables.Setting.SETTING, com.skylle.entities.generated.tables.Setting.SETTING.ID);
+		public static final org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.SystemRecord> SYSTEM_PKEY = createUniqueKey(com.skylle.entities.generated.tables.System.SYSTEM, com.skylle.entities.generated.tables.System.SYSTEM.ID);
+	}
+
+	private static class ForeignKeys0 extends org.jooq.impl.AbstractKeys {
+		public static final org.jooq.ForeignKey<com.skylle.entities.generated.tables.records.MessageRecord, com.skylle.entities.generated.tables.records.ServerRecord> MESSAGE__MESSAGE_SERVER = createForeignKey(com.skylle.entities.generated.Keys.SERVER_PKEY, com.skylle.entities.generated.tables.Message.MESSAGE, com.skylle.entities.generated.tables.Message.MESSAGE.SERVER_ID);
 	}
 }

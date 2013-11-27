@@ -11,7 +11,7 @@ package com.skylle.entities.generated.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Message extends org.jooq.impl.TableImpl<com.skylle.entities.generated.tables.records.MessageRecord> {
 
-	private static final long serialVersionUID = 423384757;
+	private static final long serialVersionUID = -98435652;
 
 	/**
 	 * The singleton instance of <code>public.message</code>
@@ -45,6 +45,11 @@ public class Message extends org.jooq.impl.TableImpl<com.skylle.entities.generat
 	 * The column <code>public.message.log_level</code>. 
 	 */
 	public final org.jooq.TableField<com.skylle.entities.generated.tables.records.MessageRecord, java.lang.Integer> LOG_LEVEL = createField("log_level", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this);
+
+	/**
+	 * The column <code>public.message.server_id</code>. 
+	 */
+	public final org.jooq.TableField<com.skylle.entities.generated.tables.records.MessageRecord, java.lang.Integer> SERVER_ID = createField("server_id", org.jooq.impl.SQLDataType.INTEGER, this);
 
 	/**
 	 * Create a <code>public.message</code> table reference
@@ -82,6 +87,14 @@ public class Message extends org.jooq.impl.TableImpl<com.skylle.entities.generat
 	@Override
 	public java.util.List<org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.MessageRecord>> getKeys() {
 		return java.util.Arrays.<org.jooq.UniqueKey<com.skylle.entities.generated.tables.records.MessageRecord>>asList(com.skylle.entities.generated.Keys.MESSAGE_PKEY);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public java.util.List<org.jooq.ForeignKey<com.skylle.entities.generated.tables.records.MessageRecord, ?>> getReferences() {
+		return java.util.Arrays.<org.jooq.ForeignKey<com.skylle.entities.generated.tables.records.MessageRecord, ?>>asList(com.skylle.entities.generated.Keys.MESSAGE__MESSAGE_SERVER);
 	}
 
 	/**

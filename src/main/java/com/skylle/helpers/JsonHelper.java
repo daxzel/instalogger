@@ -1,4 +1,4 @@
-package com.skylle;
+package com.skylle.helpers;
 
 import org.jooq.Field;
 import org.jooq.Record;

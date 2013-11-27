@@ -39,10 +39,10 @@
 }
 
 .skylle-fluid-container {
-  padding-left: 15px;
-  padding-right: 15px;
-  margin-left: auto;
-  margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .skylle-controls {
@@ -137,9 +137,15 @@
     height: 100%;
 }
 
+.skylle-fluid-message-container {
+    padding-top: 10px;
 
+    display: table;
+    table-layout: fixed;
 
+    width:100%;
+}
 
-
-
-
+.skylle-fluid-message-container>.panel {
+    display: table-cell;
+}

@@ -28,9 +28,38 @@ skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope
   };
 }]);
 
+function getServer($http, $scope, message) {
+    if (message.server_id == undefined) {
+        return $scope.servers.default
+    } else {
+        if ($scope.servers[message.server_id] == undefined) {
+            $scope.servers[message.server_id] = {}
+            var server = $scope.servers[message.server_id]
+            server.messages = []
+            server.id = message.server_id;
+            server.refresh = false;
+            $http({
+                method: 'GET',
+                url: '/server',
+                params: {id: server.id}
+            }).success(function (result) {
+                server.name = result.name
+            });
+            return server;
+        } else {
+            return $scope.servers[message.server_id];
+        }
+    }
+}
+
 skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http', '$sce', '$resource',
 function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
-    $scope.messages = []
+    $scope.servers = {}
+    $scope.servers.default = {}
+    $scope.servers.default.refresh = true
+    $scope.servers.default.id = 'default'
+    $scope.servers.default.name = 'default'
+    $scope.servers.default.messages = []
 
     $scope.showMessage = function(message) {
         strings = message.text.split('\n');
@@ -44,7 +73,9 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
             result.push("<br/>")
             if (strings[i].startsWith("\tat ")) {
                 result.push("<b>             ")
-                if (strings[i].contains('thesis')) {
+                if (strings[i].contains('thesis')
+                    || strings[i].contains('docflow')
+                    || strings[i].contains('taskman')) {
                     result.push('<span style=\"color: green\">')
                     result.push(strings[i])
                     result.push('</span>')
@@ -71,7 +102,10 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
             method: 'DELETE',
             url: '/messages/delete_all'
         })
-        $scope.messages = []
+
+        for (var server in $scope.servers) {
+            server.messages = []
+        }
     }
 
     var sock;
@@ -86,15 +120,16 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         return ''
     }
 
-    $scope.messageScroll = function() {
-        $http({
-            method: 'GET',
-            url: '/messages',
-            params: {offset: $scope.messages.length}
-        }).success(function (result) {
-            $scope.messages = $scope.messages.concat(result);
-            $scope.refresh = false;
-        })
+    $scope.messageScroll = function(server) {
+//        $http({
+//            method: 'GET',
+//            url: '/messages',
+//            params: {offset: server.messages.length},
+//            params: {name: server.name}
+//        }).success(function (result) {
+//            server.messages = server.messages.concat(result);
+//            $scope.refresh = false;
+//        })
     };
 
     $scope.showDanger = true;
@@ -142,35 +177,58 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         info.command = 'changeConfig';
         sock.send(JSON.stringify(info));
 
-        if (enable) {
-            $scope.refresh = true;
-            $scope.messages = [];
-            $http({
-                method: 'GET',
-                url: '/messages',
-                params: {offset: $scope.messages.length}
-            }).success(function (result) {
-                $scope.messages = result;
-                $scope.refresh = false;
-            });
-        }
+//        if (enable) {
+//            $scope.refresh = true;
+//            $scope.messages = [];
+//            $http({
+//                method: 'GET',
+//                url: '/messages',
+//                params: {offset: $scope.messages.length}
+//            }).success(function (result) {
+//                $scope.messages = result;
+//                $scope.refresh = false;
+//            });
+//        }
     };
+
+    sock = new SockJS("/eventbus");
+    webSocketMessageFactory.on(sock, function (message) {
+        var server = getServer($http, $scope, message)
+        if (!server.refresh) {
+            server.messages.unshift(message);
+            if (server.messages.length > 100) {
+                server.messages.pop();
+            }
+        }
+    });
 
     $http({
         method: 'GET',
-        url: '/messages',
-        params: {offset: $scope.messages.length}
+        url: '/messages'
     }).success(function (result) {
-        $scope.messages = result;
-        sock = new SockJS("/eventbus");
-        webSocketMessageFactory.on(sock, function (data) {
-        if (!$scope.refresh) {
-            $scope.messages.unshift(data);
-            if ($scope.messages.length > 100) {
-                $scope.messages.pop();
-            }
+        $scope.servers.default.messages = result;
+        $scope.servers.default.refresh = false;
+    });
+
+    $http({
+        method: 'GET',
+        url: '/servers'
+    }).success(function (result) {
+        for (var i=0; i < result.length; i++) {
+            var server = {}
+            server.name = result[i].name
+            server.refresh = true
+            server.id = result[i].id
+            $scope.servers[server.id] = server
+            $http({
+                method: 'GET',
+                url: '/messages',
+                params: {server_id: server.id}
+            }).success(function (result) {
+                server.messages = result;
+                server.refresh = false
+            });
         }
-        });
     });
 }]);
 

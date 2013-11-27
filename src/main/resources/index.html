@@ -20,12 +20,23 @@
 <body ng-app="skylleApp">
     <div class="skylle-main-container" ng-controller="messagesController">
         <div class="skylle-fluid-container skylle-controls skylle-controls-fixed">
-
             <div class="btn-group pull-left">
-                <button type="button" ng-class="{'skylle-not-active': !showDanger}" class="btn btn-default btn-danger" ng-click="changeConfig(40000)">Error</button>
-                <button type="button" ng-class="{'skylle-not-active': !showWarning}" class="btn btn-default btn-warning" ng-click="changeConfig(30000)">Warning</button>
-                <button type="button" ng-class="{'skylle-not-active': !showInfo}" class="btn btn-default btn-info" ng-click="changeConfig(20000)">Info</button>
-                <button type="button" ng-class="{'skylle-not-active': !showDebug}" class="btn btn-default btn-debug" ng-click="changeConfig(10000)">Debug</button>
+                <button type="button" ng-class="{'skylle-not-active': !showDanger}"
+                        class="btn btn-default btn-danger" ng-click="changeConfig(40000)">
+                    Error
+                </button>
+                <button type="button" ng-class="{'skylle-not-active': !showWarning}"
+                        class="btn btn-default btn-warning" ng-click="changeConfig(30000)">
+                    Warning
+                </button>
+                <button type="button" ng-class="{'skylle-not-active': !showInfo}"
+                        class="btn btn-default btn-info" ng-click="changeConfig(20000)">
+                    Info
+                </button>
+                <button type="button" ng-class="{'skylle-not-active': !showDebug}"
+                        class="btn btn-default btn-debug" ng-click="changeConfig(10000)">
+                    Debug
+                </button>
             </div>
 
             <button type="button" class="btn btn-default pull-right" ng-click="clearMessages()">
@@ -36,12 +47,18 @@
                 <input type="text" class="form-control" placeholder="Search..." ng-model="searchText">
                 <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
             </div>
-
-
         </div>
-        <div class="skylle-fluid-container skylle-messages" scroll>
-            <div ng-repeat="message in messages | showMessageLogLevel:this | filter:searchText" class="alert"
-                  ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
+        <div class="skylle-fluid-container skylle-fluid-message-container" scroll>
+
+            <div class="panel panel-info" ng-repeat="server in servers">
+                <div class="panel-heading">
+                    {{server.name}}
+                </div>
+                <div class="panel-body">
+                    <div ng-repeat="message in server.messages | showMessageLogLevel:this | filter:searchText" class="alert"
+                         ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
+                </div>
+            </div>
         </div>
     </div>
 <!--<div class="skylle-border-hack"> <div class="container skylle-border-hack-container skylle-main-container"></div></div>-->
