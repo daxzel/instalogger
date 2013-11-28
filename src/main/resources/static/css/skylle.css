@@ -150,3 +150,7 @@
 .skylle-fluid-message-container>.panel {
     display: table-cell;
 }
+
+.skylle-panel-server-heading {
+    padding: 5px 15px;
+}

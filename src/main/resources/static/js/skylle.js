@@ -69,6 +69,37 @@ skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory',
 function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
     $scope.servers = {}
 
+    $scope.logLevels = {
+        10000: {
+           id : 10000,
+           alertStyle: 'alert-debug',
+           show: true,
+           buttonName: "Debug",
+           buttonStyle: 'btn-debug'
+        },
+        20000: {
+           id : 20000,
+           alertStyle: 'alert-info',
+           show: true,
+           buttonName: "Info",
+           buttonStyle: 'btn-info'
+        },
+        30000: {
+           id : 30000,
+           alertStyle: 'alert-warning',
+           show: true,
+           buttonName: "Warning",
+           buttonStyle: 'btn-warning'
+        },
+        40000: {
+           id : 40000,
+           alertStyle: 'alert-danger',
+           show: true,
+           buttonName: "Error",
+           buttonStyle: 'btn-danger'
+        }
+    }
+
     $http({
         method: 'GET',
         url: '/messages'
@@ -131,13 +162,7 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
     var sock;
 
     $scope.getClassOfAlert = function(message) {
-        switch (message.log_level) {
-            case 40000: return 'alert-danger'
-            case 30000: return 'alert-warning'
-            case 20000: return 'alert-info'
-            case 10000: return 'alert-debug'
-        }
-        return ''
+        return $scope.logLevels[message.log_level].alertStyle
     }
 
     $scope.messageScroll = function(server) {
@@ -152,48 +177,20 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
 //        })
     };
 
-    $scope.showDanger = true;
-    $scope.showWarning = true;
-    $scope.showInfo = true;
-    $scope.showDebug = true;
-
     $http({
         method: 'GET',
         url: '/settings',
     }).success(function (result) {
         for (var i=0; i< result.length; i++) {
-            switch (result[i].id) {
-                case '40000': $scope.showDanger = result[i].value == 'true'
-                    break;
-                case '30000': $scope.showWarning = result[i].value == 'true'
-                    break;
-                case '20000': $scope.showInfo = result[i].value == 'true'
-                    break;
-                case '10000': $scope.showDebug = result[i].value == 'true'
-            }
+            $scope.logLevels[result[i].id]. show = result[i].value == 'true';
         }
     });
 
     $scope.changeConfig = function(level) {
-        var enable = false
-
-        switch (level) {
-            case 40000: $scope.showDanger = !$scope.showDanger;
-                enable = $scope.showDanger
-                break;
-            case 30000: $scope.showWarning = !$scope.showWarning;
-                enable = $scope.showWarning
-                break;
-            case 20000: $scope.showInfo = !$scope.showInfo;
-                enable = $scope.showInfo
-                break;
-            case 10000: $scope.showDebug = !$scope.showDebug;
-                enable = $scope.showDebug
-        }
-
+        level.show = !level.show;
         var info = {};
-        info.id = level;
-        info.value = enable;
+        info.id = level.id;
+        info.value = level.show;
         info.command = 'changeConfig';
         sock.send(JSON.stringify(info));
 
@@ -247,12 +244,7 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
 skylleApp.filter('showMessageLogLevel',[function() {
     return function(messages, $scope) {
         return messages.filter(function(message, index, array) {
-            if (($scope.showDanger && message.log_level == 40000) ||
-                ($scope.showWarning && message.log_level == 30000) ||
-                ($scope.showInfo && message.log_level == 20000) ||
-                ($scope.showDebug && message.log_level == 10000)) {
-                return true
-            }
+            return $scope.logLevels[message.log_level].show
         });
 
     }

@@ -21,21 +21,9 @@
     <div class="skylle-main-container" ng-controller="messagesController">
         <div class="skylle-fluid-container skylle-controls skylle-controls-fixed">
             <div class="btn-group pull-left">
-                <button type="button" ng-class="{'skylle-not-active': !showDanger}"
-                        class="btn btn-default btn-danger" ng-click="changeConfig(40000)">
-                    Error
-                </button>
-                <button type="button" ng-class="{'skylle-not-active': !showWarning}"
-                        class="btn btn-default btn-warning" ng-click="changeConfig(30000)">
-                    Warning
-                </button>
-                <button type="button" ng-class="{'skylle-not-active': !showInfo}"
-                        class="btn btn-default btn-info" ng-click="changeConfig(20000)">
-                    Info
-                </button>
-                <button type="button" ng-class="{'skylle-not-active': !showDebug}"
-                        class="btn btn-default btn-debug" ng-click="changeConfig(10000)">
-                    Debug
+                <button ng-repeat="logLevel in logLevels" type="button" ng-class="{'skylle-not-active': !logLevel.show}"
+                        class="btn btn-default {{logLevel.buttonStyle}}" ng-click="changeConfig(logLevel)">
+                    {{logLevel.buttonName}}
                 </button>
             </div>
 
@@ -47,7 +35,7 @@
         <div class="skylle-fluid-container skylle-fluid-message-container" scroll>
 
             <div class="panel panel-info" ng-repeat="server in servers">
-                <div class="panel-heading">
+                <div class="panel-heading skylle-panel-server-heading">
                     {{server.name}}
                     <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
                         <span class="glyphicon glyphicon-trash"></span>
