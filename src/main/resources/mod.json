@@ -1,7 +1,7 @@
 {
 
   // Java verticle
-  "main":"com.skylle.MainVerticle",
+  "main":"com.instalogger.MainVerticle",
 
   // If your module is going to be registered in the Vert.x module registry you will also need the following
   // mandatory fields

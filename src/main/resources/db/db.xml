@@ -35,7 +35,7 @@
 
         <target>
             <!-- The destination package of your generated classes (within the destination directory) -->
-            <packageName>com.skylle.entities</packageName>
+            <packageName>com.instalogger.entities</packageName>
 
             <!-- The destination directory of your generated classes -->
             <directory>/Users/andreytsarevskiy/projects/sky/src/main/java</directory>

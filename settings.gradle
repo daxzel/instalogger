@@ -1,7 +1,7 @@
 include 'log4j'
 
 
-rootProject.name = 'skylle'
+rootProject.name = 'instalogger'
 
 rootProject.children.each {project ->
     String fileBaseName = project.name

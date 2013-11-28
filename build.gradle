@@ -122,7 +122,7 @@ task pullInDeps(dependsOn: copyMod, description: 'Pull in all the module depende
     }
 }
 
-def log4jModule = project('skylle-log4j')
+def log4jModule = project('instalogger-log4j')
 
 configure(log4jModule) {
     apply plugin: 'java'
@@ -207,12 +207,12 @@ task generateJooq() << {
     println("Found clazz " + clazz)
 
     jdbc.setDriver('org.postgresql.Driver')
-    jdbc.setUrl("jdbc:postgresql://localhost/skylle")
+    jdbc.setUrl("jdbc:postgresql://localhost/instalogger")
     jdbc.setUser("root")
     jdbc.setPassword("root")
 
     target.setDirectory("${rootDir}/src/main/java")
-    target.setPackageName("com.skylle.entities.generated")
+    target.setPackageName("com.instalogger.entities.generated")
     generator.setTarget(target)
 
     database.setInputSchema("public")

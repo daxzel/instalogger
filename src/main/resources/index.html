@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Skylle</title>
+    <title>Instalogger</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="/static/images/skylle.ico" itemprop="image">
-    <link rel="shortcut icon" href="/static/images/skylle.ico">
+    <meta content="/static/images/instalogger.ico" itemprop="image">
+    <link rel="shortcut icon" href="/static/images/instalogger.ico">
     <link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
-    <link href="static/css/skylle.css" rel="stylesheet" media="screen">
+    <link href="static/css/instalogger.css" rel="stylesheet" media="screen">
     <script src="//code.jquery.com/jquery.js"></script>
     <script src="static/js/sockjs.js"></script>
     <script src="static/js/angular.min.js"></script>
@@ -15,27 +15,27 @@
     <script src="static/js/angular-sanitize.min.js"></script>
     <script src="static/js/angular-animate.min.js"></script>
     <script src="static/js/angular-resource.min.js"></script>
-    <script src="static/js/skylle.js"></script>
+    <script src="static/js/instalogger.js"></script>
 </head>
-<body ng-app="skylleApp">
-    <div class="skylle-main-container" ng-controller="messagesController">
-        <div class="skylle-fluid-container skylle-controls skylle-controls-fixed">
+<body ng-app="instaloggerApp">
+    <div class="instalogger-main-container" ng-controller="messagesController">
+        <div class="instalogger-fluid-container instalogger-controls instalogger-controls-fixed">
             <div class="btn-group pull-left">
-                <button ng-repeat="logLevel in logLevels" type="button" ng-class="{'skylle-not-active': !logLevel.show}"
+                <button ng-repeat="logLevel in logLevels" type="button" ng-class="{'instalogger-not-active': !logLevel.show}"
                         class="btn btn-default {{logLevel.buttonStyle}}" ng-click="changeConfig(logLevel)">
                     {{logLevel.buttonName}}
                 </button>
             </div>
 
-            <div class="input-group pull-left skylle-search">
+            <div class="input-group pull-left instalogger-search">
                 <input type="text" class="form-control" placeholder="Search..." ng-model="searchText">
                 <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
             </div>
         </div>
-        <div class="skylle-fluid-container skylle-fluid-message-container" scroll>
+        <div class="instalogger-fluid-container instalogger-fluid-message-container" scroll>
 
             <div class="panel panel-info" ng-repeat="server in servers">
-                <div class="panel-heading skylle-panel-server-heading">
+                <div class="panel-heading instalogger-panel-server-heading">
                     {{server.name}}
                     <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
                         <span class="glyphicon glyphicon-trash"></span>
@@ -48,6 +48,6 @@
             </div>
         </div>
     </div>
-<!--<div class="skylle-border-hack"> <div class="container skylle-border-hack-container skylle-main-container"></div></div>-->
+<!--<div class="instalogger-border-hack"> <div class="container instalogger-border-hack-container instalogger-main-container"></div></div>-->
 </body>
 </html>
