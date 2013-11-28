@@ -30,7 +30,11 @@ skylleApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope
 
 function getServer($http, $scope, message) {
     if (message.server_id == undefined) {
-        return $scope.servers.default
+        if ($scope.servers.default != undefined) {
+            return $scope.servers.default;
+        } else {
+            return createDefaultServer($scope);
+        }
     } else {
         if ($scope.servers[message.server_id] == undefined) {
             $scope.servers[message.server_id] = {}
@@ -52,14 +56,28 @@ function getServer($http, $scope, message) {
     }
 }
 
-skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http', '$sce', '$resource',
-function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
-    $scope.servers = {}
+function createDefaultServer($scope) {
     $scope.servers.default = {}
-    $scope.servers.default.refresh = true
+    $scope.servers.default.refresh = false
     $scope.servers.default.id = 'default'
     $scope.servers.default.name = 'default'
     $scope.servers.default.messages = []
+    return $scope.servers.default;
+}
+
+skylleApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http', '$sce', '$resource',
+function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
+    $scope.servers = {}
+
+    $http({
+        method: 'GET',
+        url: '/messages'
+    }).success(function (result) {
+        if (result.length > 0) {
+            server = createDefaultServer($scope)
+            server.messages = result;
+        }
+    });
 
     $scope.showMessage = function(message) {
         strings = message.text.split('\n');
@@ -97,15 +115,17 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         return $sce.trustAsHtml(result.join(""));
     }
 
-    $scope.clearMessages = function() {
+    $scope.clearServer = function(server) {
+        var successFunction = function () {
+            delete $scope.servers[server.id];
+            server.messages = server.messages.concat(result);
+            $scope.refresh = false;
+        }
         $http({
             method: 'DELETE',
-            url: '/messages/delete_all'
-        })
-
-        for (var server in $scope.servers) {
-            server.messages = []
-        }
+            url: '/server',
+            params: {id: server.id}
+        }).success(successFunction);
     }
 
     var sock;
@@ -200,14 +220,6 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
                 server.messages.pop();
             }
         }
-    });
-
-    $http({
-        method: 'GET',
-        url: '/messages'
-    }).success(function (result) {
-        $scope.servers.default.messages = result;
-        $scope.servers.default.refresh = false;
     });
 
     $http({

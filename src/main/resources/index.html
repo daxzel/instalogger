@@ -39,10 +39,6 @@
                 </button>
             </div>
 
-            <button type="button" class="btn btn-default pull-right" ng-click="clearMessages()">
-                <span class= "glyphicon glyphicon-remove-circle"></span> Clear
-            </button>
-
             <div class="input-group pull-left skylle-search">
                 <input type="text" class="form-control" placeholder="Search..." ng-model="searchText">
                 <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
@@ -53,6 +49,9 @@
             <div class="panel panel-info" ng-repeat="server in servers">
                 <div class="panel-heading">
                     {{server.name}}
+                    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
                 </div>
                 <div class="panel-body">
                     <div ng-repeat="message in server.messages | showMessageLogLevel:this | filter:searchText" class="alert"

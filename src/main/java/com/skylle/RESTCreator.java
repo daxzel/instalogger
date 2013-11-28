@@ -38,18 +38,32 @@ public class RESTCreator {
         });
     }
 
-    public void createGet(final Table table, String url, final TableField field) {
+    public void createGet(final Table table, String url, final TableField idField) {
         routeMatcher.get(url, new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest request) {
                 Result<Record> results = dslContext.select().from(table).
-                        where(field.equal(Integer.valueOf(request.params().get("id")))).fetch();
+                        where(idField.equal(Integer.valueOf(request.params().get("id")))).fetch();
                 String result = "";
                 if (results.size() == 1) {
                     result = JsonHelper.formatJSON(results.get(0));
                 }
                 request.response().setChunked(true);
                 request.response().write(result);
+                request.response().end();
+                request.response().close();
+            }
+        });
+    }
+
+    public void createDelete(final Table table, String url, final TableField idField) {
+        routeMatcher.delete(url, new Handler<HttpServerRequest>() {
+            @Override
+            public void handle(HttpServerRequest request) {
+                DeleteQuery deleteQuery = dslContext.deleteQuery(table);
+                deleteQuery.addConditions(idField.equal(Integer.valueOf(request.params().get("id"))));
+                deleteQuery.execute();
+
                 request.response().end();
                 request.response().close();
             }

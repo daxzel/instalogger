@@ -3,10 +3,7 @@ package com.skylle;
 import com.skylle.helpers.Config;
 import com.skylle.helpers.DBUpdater;
 import com.skylle.helpers.JsonHelper;
-import org.jooq.DSLContext;
-import org.jooq.Record;
-import org.jooq.Result;
-import org.jooq.SQLDialect;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.VoidHandler;
@@ -82,6 +79,23 @@ public class MainVerticle extends Verticle {
         creator.createGet(SERVER, "/server", SERVER.ID);
 
 
+        routeMatcher.delete("/server", new Handler<HttpServerRequest>() {
+            @Override
+            public void handle(HttpServerRequest request) {
+                String idParams = request.params().get("id");
+                if (!idParams.equals("default")) {
+                    DeleteQuery deleteQuery = dslContext.deleteQuery(SERVER);
+                    deleteQuery.addConditions(SERVER.ID.equal(Integer.valueOf(idParams)));
+                    deleteQuery.execute();
+                } else {
+                    DeleteQuery deleteQuery = dslContext.deleteQuery(MESSAGE);
+                    deleteQuery.addConditions(MESSAGE.SERVER_ID.isNull());
+                    deleteQuery.execute();
+                }
+                request.response().end();
+                request.response().close();
+            }
+        });
 
         routeMatcher.get("/setting/:id", new Handler<HttpServerRequest>() {
             @Override
@@ -114,7 +128,7 @@ public class MainVerticle extends Verticle {
                     serverId = Integer.valueOf(serverIdParam);
                 }
                 String result = JsonHelper.formatJSON(dslContext.select().from(MESSAGE)
-                        .where(MESSAGE.SERVER_ID.equal(serverId))
+                        .where(serverId != null ? MESSAGE.SERVER_ID.equal(serverId) : MESSAGE.SERVER_ID.isNull())
                         .orderBy(MESSAGE.ID.desc()).limit(offset, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
                 event.response().write(result);

@@ -97,6 +97,7 @@
 
 .alert {
     padding: 5px;
+    font-size: 11px;
     margin-bottom: 5px;
     border: 1px solid transparent;
     border-radius: 4px;
