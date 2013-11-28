@@ -165,16 +165,22 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         return $scope.logLevels[message.log_level].alertStyle
     }
 
-    $scope.messageScroll = function(server) {
-//        $http({
-//            method: 'GET',
-//            url: '/messages',
-//            params: {offset: server.messages.length},
-//            params: {name: server.name}
-//        }).success(function (result) {
-//            server.messages = server.messages.concat(result);
-//            $scope.refresh = false;
-//        })
+    $scope.messageScroll = function() {
+        for (var key in $scope.servers) {
+            var server = $scope.servers[key];
+            server.refresh = true
+            $http({
+                method: 'GET',
+                url: '/messages',
+                params: {
+                    server_id: server.id,
+                    offset: server.messages.length
+                }
+            }).success(function (result) {
+                server.messages = result;
+                server.refresh = false
+            });
+        }
     };
 
     $http({
@@ -194,18 +200,19 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         info.command = 'changeConfig';
         sock.send(JSON.stringify(info));
 
-//        if (enable) {
-//            $scope.refresh = true;
-//            $scope.messages = [];
-//            $http({
-//                method: 'GET',
-//                url: '/messages',
-//                params: {offset: $scope.messages.length}
-//            }).success(function (result) {
-//                $scope.messages = result;
-//                $scope.refresh = false;
-//            });
-//        }
+        for (var key in $scope.servers) {
+            var server = $scope.servers[key];
+            server.refresh = true
+            server.messages = []
+            $http({
+                method: 'GET',
+                url: '/messages',
+                params: {server_id: server.id}
+            }).success(function (result) {
+                server.messages = result;
+                server.refresh = false
+            });
+        }
     };
 
     sock = new SockJS("/eventbus");

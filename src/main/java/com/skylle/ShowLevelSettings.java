@@ -78,4 +78,8 @@ public class ShowLevelSettings {
         }
     }
 
+    public List<Integer> getShowingLevels() {
+        return showLevelSettings;
+    }
+
 }

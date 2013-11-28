@@ -121,14 +121,16 @@ public class MainVerticle extends Verticle {
                 String serverIdParam = event.params().get("server_id");
                 Integer offset = 0;
                 Integer serverId = null;
+                ShowLevelSettings showLevelSettings = new ShowLevelSettings(dslContext);
                 if (offsetParam != null) {
                     offset = Integer.valueOf(offsetParam);
                 }
-                if (serverIdParam != null) {
+                if (serverIdParam != null && !serverIdParam.equals("default")) {
                     serverId = Integer.valueOf(serverIdParam);
                 }
                 String result = JsonHelper.formatJSON(dslContext.select().from(MESSAGE)
                         .where(serverId != null ? MESSAGE.SERVER_ID.equal(serverId) : MESSAGE.SERVER_ID.isNull())
+                        .and(MESSAGE.LOG_LEVEL.in(showLevelSettings.getShowingLevels()))
                         .orderBy(MESSAGE.ID.desc()).limit(offset, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
                 event.response().write(result);
