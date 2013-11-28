@@ -42,6 +42,7 @@ function getServer($http, $scope, message) {
             server.messages = []
             server.id = message.server_id;
             server.refresh = false;
+            server.down = false;
             $http({
                 method: 'GET',
                 url: '/server',
@@ -61,6 +62,7 @@ function createDefaultServer($scope) {
     $scope.servers.default.refresh = false
     $scope.servers.default.id = 'default'
     $scope.servers.default.name = 'default'
+    $scope.servers.default.down = false;
     $scope.servers.default.messages = []
     return $scope.servers.default;
 }
@@ -150,8 +152,9 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         var successFunction = function () {
             delete $scope.servers[server.id];
             server.messages = server.messages.concat(result);
-            $scope.refresh = false;
+            server.refresh = false;
         }
+        server.refresh = true;
         $http({
             method: 'DELETE',
             url: '/server',
@@ -168,18 +171,30 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
     $scope.messageScroll = function() {
         for (var key in $scope.servers) {
             var server = $scope.servers[key];
-            server.refresh = true
-            $http({
-                method: 'GET',
-                url: '/messages',
-                params: {
-                    server_id: server.id,
-                    offset: server.messages.length
-                }
-            }).success(function (result) {
-                server.messages = result;
-                server.refresh = false
-            });
+            if (!server.down) {
+                server.refresh = true
+                $http({
+                    method: 'GET',
+                    url: '/messages',
+                    params: {
+                        server_id: server.id,
+                        offset: server.messages.length
+                    }
+                }).success(function (result) {
+                    if (result.length == 0) {
+                        server.down = true;
+                        server.refresh = false;
+                        $scope.refresh = false;
+                        return;
+                    }
+                    server.messages = server.messages.concat(result);
+                    server.refresh = false;
+                    //todo: remove after server scrolls
+                    $scope.refresh = false;
+                });
+            } else {
+                 $scope.refresh = false;
+            }
         }
     };
 
@@ -210,6 +225,7 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
                 params: {server_id: server.id}
             }).success(function (result) {
                 server.messages = result;
+                server.down = false;
                 server.refresh = false
             });
         }
