@@ -71,7 +71,9 @@ instaloggerApp.controller('messagesController', ['$scope', 'webSocketMessageFact
 function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
     $scope.servers = {}
 
-    $scope.unreadErrorMessages = []
+    $scope.unreadErrorMessages = {
+        length: 0
+    }
 
     $scope.logLevels = {
         10000: {
@@ -126,6 +128,13 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
             server.messages = result;
         }
     });
+
+    $scope.overMessage = function(message) {
+        if ($scope.unreadErrorMessages[message.id] != undefined) {
+            delete $scope.unreadErrorMessages[message.id];
+            $scope.unreadErrorMessages.length -= 1
+        }
+    }
 
     $scope.showMessage = function(message) {
         strings = message.text.split('\n');
@@ -252,7 +261,8 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         if (!server.refresh) {
             server.messages.unshift(message);
             if (message.log_level == 40000) {
-                $scope.unreadErrorMessages.push('#message-' + message.id);
+                $scope.unreadErrorMessages[message.id] = {};
+                $scope.unreadErrorMessages.length += 1
             }
             if (server.messages.length > 100) {
                 server.messages.pop();
@@ -291,17 +301,6 @@ instaloggerApp.directive("scroll", function ($window) {
                     scope.refresh = true;
                     scope.messageScroll();
                  }
-             }
-
-             for (var i = scope.unreadErrorMessages.length; i--;) {
-                var unreadError = $(scope.unreadErrorMessages[i]);
-                if (unreadError != undefined) {
-                    var top = unreadError.offset().top;
-                    if(offset > top - 300 && offset < top + 500) {
-                      scope.unreadErrorMessages.splice(i, 1);
-                      scope.unreadErrorsUpdated();
-                    }
-                }
              }
         });
     };

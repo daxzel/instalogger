@@ -57,8 +57,9 @@
     background: white;
     top: 0;
     width: 100%;
-    margin-left: 15px;
-    margin-right: 15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    z-index: 1;
 }
 
 .instalogger-messages {
@@ -106,7 +107,6 @@
 }
 
 .instalogger-search {
-    width: 800px;
     padding-left: 10px;
 }
 

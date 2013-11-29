@@ -28,7 +28,7 @@
                 </button>
             </div>
 
-            <div class="input-group pull-left instalogger-search">
+            <div class="input-group instalogger-search">
                 <input type="text" class="form-control" placeholder="Search..." ng-model="searchText">
                 <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
             </div>
@@ -43,12 +43,12 @@
                     </button>
                 </div>
                 <div class="panel-body">
-                    <div id="{{ 'message-' + message.id }}"ng-repeat="message in server.messages | filter:searchText"
-                         class="alert"  ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
+                    <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
+                         ng-repeat="message in server.messages | filter:searchText" class="alert"
+                         ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
                 </div>
             </div>
         </div>
     </div>
-<!--<div class="instalogger-border-hack"> <div class="container instalogger-border-hack-container instalogger-main-container"></div></div>-->
 </body>
 </html>
