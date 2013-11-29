@@ -71,6 +71,8 @@ instaloggerApp.controller('messagesController', ['$scope', 'webSocketMessageFact
 function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
     $scope.servers = {}
 
+    $scope.unreadErrorMessages = []
+
     $scope.logLevels = {
         10000: {
            id : 10000,
@@ -101,6 +103,19 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
            buttonStyle: 'btn-danger'
         }
     }
+
+    $scope.unreadErrorsUpdated = function() {
+        Tinycon.setBubble($scope.unreadErrorMessages.length);
+        if ($scope.unreadErrorMessages.length > 0) {
+            document.title = 'Errors';
+        } else {
+            document.title = 'Instalogger';
+        }
+    }
+
+    $scope.$watch('unreadErrorMessages', function() {
+        $scope.unreadErrorsUpdated();
+    }, true);
 
     $http({
         method: 'GET',
@@ -236,6 +251,9 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         var server = getServer($http, $scope, message)
         if (!server.refresh) {
             server.messages.unshift(message);
+            if (message.log_level == 40000) {
+                $scope.unreadErrorMessages.push('#message-' + message.id);
+            }
             if (server.messages.length > 100) {
                 server.messages.pop();
             }
@@ -264,25 +282,29 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
     });
 }]);
 
-instaloggerApp.filter('showMessageLogLevel',[function() {
-    return function(messages, $scope) {
-        return messages.filter(function(message, index, array) {
-            return $scope.logLevels[message.log_level].show
-        });
-
-    }
-}]);
-
 instaloggerApp.directive("scroll", function ($window) {
     return function(scope, element, attrs) {
         angular.element($window).bind("scroll", function() {
-             if (this.pageYOffset >= element.height() - 1000) {
+            var offset = this.pageYOffset;
+             if (offset >= element.height() - 1000) {
                  if (!scope.refresh) {
                     scope.refresh = true;
                     scope.messageScroll();
                  }
              }
+
+             for (var i = scope.unreadErrorMessages.length; i--;) {
+                var unreadError = $(scope.unreadErrorMessages[i]);
+                if (unreadError != undefined) {
+                    var top = unreadError.offset().top;
+                    if(offset > top - 300 && offset < top + 500) {
+                      scope.unreadErrorMessages.splice(i, 1);
+                      scope.unreadErrorsUpdated();
+                    }
+                }
+             }
         });
     };
 });
+
 

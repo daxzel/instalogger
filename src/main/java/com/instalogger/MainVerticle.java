@@ -162,24 +162,31 @@ public class MainVerticle extends Verticle {
                             Result<Record> servers = dslContext.select()
                                     .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
                             if (servers.isEmpty()) {
-                                dslContext.insertInto(SERVER, SERVER.NAME).values(serverName).execute();
-                                servers = dslContext.select()
-                                        .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
+                                Record record = dslContext.insertInto(SERVER, SERVER.NAME)
+                                        .values(serverName)
+                                        .returning(SERVER.ID)
+                                        .fetchOne();
+                                serverId = record.getValue(SERVER.ID);
+                            } else {
+                                serverId = servers.get(0).getValue(SERVER.ID);
                             }
-                            serverId = servers.get(0).getValue(SERVER.ID);
                         }
 
                         Integer logLevel = Integer.valueOf(event.params().get("logLevel"));
                         short length = bufferEvent.getShort(0);
                         String text = bufferEvent.getString(2, length);
+
+                        Record message = dslContext
+                                .insertInto(MESSAGE, MESSAGE.TEXT, MESSAGE.LOG_LEVEL, MESSAGE.SERVER_ID)
+                                .values(text, logLevel, serverId).returning(MESSAGE.ID).fetchOne();
+
                         JsonObject jsonObject = new JsonObject();
                         jsonObject.putString("text", text);
                         jsonObject.putNumber("log_level", logLevel);
                         jsonObject.putString("create_time", formatter.format(new Date()));
                         jsonObject.putString("server_id", serverId != null ? serverId.toString() : null);
+                        jsonObject.putNumber("id", message.getValue(MESSAGE.ID));
                         eventBus.publish("messageAdded", jsonObject);
-                        dslContext.insertInto(MESSAGE, MESSAGE.TEXT, MESSAGE.LOG_LEVEL, MESSAGE.SERVER_ID)
-                                .values(text, logLevel, serverId).execute();
                         event.response().setChunked(true);
                         event.response().write("ok");
                         event.response().end();

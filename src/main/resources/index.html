@@ -15,6 +15,7 @@
     <script src="static/js/angular-sanitize.min.js"></script>
     <script src="static/js/angular-animate.min.js"></script>
     <script src="static/js/angular-resource.min.js"></script>
+    <script src="static/js/tinycon.min.js"></script>
     <script src="static/js/instalogger.js"></script>
 </head>
 <body ng-app="instaloggerApp">
@@ -42,8 +43,8 @@
                     </button>
                 </div>
                 <div class="panel-body">
-                    <div ng-repeat="message in server.messages | showMessageLogLevel:this | filter:searchText" class="alert"
-                         ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
+                    <div id="{{ 'message-' + message.id }}"ng-repeat="message in server.messages | filter:searchText"
+                         class="alert"  ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
                 </div>
             </div>
         </div>
