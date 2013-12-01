@@ -33,19 +33,20 @@
                 <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
             </div>
         </div>
-        <div class="instalogger-fluid-container instalogger-fluid-message-container" scroll>
-
-            <div class="panel panel-info" ng-repeat="server in servers">
-                <div class="panel-heading instalogger-panel-server-heading">
-                    {{server.name}}
-                    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
-                        <span class="glyphicon glyphicon-trash"></span>
-                    </button>
-                </div>
-                <div class="panel-body">
-                    <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
-                         ng-repeat="message in server.messages" class="alert"
-                         ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
+        <div class="instalogger-fluid-container instalogger-fluid-message-container"scroll>
+            <div class="instalogger-panel-row">
+                <div class="panel panel-info" ng-repeat="server in servers">
+                    <div class="panel-heading instalogger-panel-server-heading">
+                        {{server.name}}
+                        <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
+                            <span class="glyphicon glyphicon-trash"></span>
+                        </button>
+                    </div>
+                    <div class="panel-body instalogger-message-panel-body" instalogger-scroll="{{server.id}}">
+                        <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
+                             ng-repeat="message in server.messages" class="alert"
+                             ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
+                    </div>
                 </div>
             </div>
         </div>

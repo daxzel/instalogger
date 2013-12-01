@@ -88,7 +88,7 @@ function ($scope, $http, $sce, $resource) {
         }
     }
 
-    var sock = new SockJS("/eventbus");
+    sock = new SockJS("/eventbus");
 
     sock.onopen = function() {
         sock.onmessage = function (response) {
@@ -194,33 +194,27 @@ function ($scope, $http, $sce, $resource) {
         return $scope.logLevels[message.log_level].alertStyle
     }
 
-    $scope.messageScroll = function() {
-        for (var key in $scope.servers) {
-            var server = $scope.servers[key];
-            if (!server.down) {
-                server.refresh = true
-                $http({
-                    method: 'GET',
-                    url: '/messages',
-                    params: {
-                        server_id: server.id,
-                        offset: server.messages.length
-                    }
-                }).success(function (result) {
-                    if (result.length == 0) {
-                        server.down = true;
-                        server.refresh = false;
-                        $scope.refresh = false;
-                        return;
-                    }
-                    server.messages = server.messages.concat(result);
+    $scope.messageScroll = function(server) {
+        if (!server.down) {
+            server.refresh = true
+            $http({
+                method: 'GET',
+                url: '/messages',
+                params: {
+                    server_id: server.id,
+                    offset: server.messages.length
+                }
+            }).success(function (result) {
+                if (result.length == 0) {
+                    server.down = true;
                     server.refresh = false;
-                    //todo: remove after server scrolls
-                    $scope.refresh = false;
-                });
-            } else {
-                 $scope.refresh = false;
-            }
+                    return;
+                }
+                $scope.servers[server.id].messages = server.messages.concat(result);
+                server.refresh = false;
+            });
+        } else {
+             server.refresh = false;
         }
     };
 
@@ -264,16 +258,17 @@ function ($scope, $http, $sce, $resource) {
     });
 }]);
 
-instaloggerApp.directive("scroll", function ($window) {
+instaloggerApp.directive("instaloggerScroll", function ($window) {
     return function(scope, element, attrs) {
         angular.element($window).bind("scroll", function() {
             var offset = this.pageYOffset;
-             if (offset >= element.height() - 1000) {
-                 if (!scope.refresh) {
-                    scope.refresh = true;
-                    scope.messageScroll();
-                 }
-             }
+            var server = scope.servers[attrs.instaloggerScroll];
+            if (offset >= element.height() - 1000) {
+                if (!server.refresh) {
+                    server.refresh = true;
+                    scope.messageScroll(server);
+                }
+            }
         });
     };
 });

@@ -36,6 +36,7 @@
     border-right: 1px solid #e5e5e5;
     border-left: 1px solid #e5e5e5;
     padding-top: 55px;
+    height: 100%;
 }
 
 .instalogger-fluid-container {
@@ -59,7 +60,6 @@
     width: 100%;
     padding-left: 15px;
     padding-right: 15px;
-    z-index: 1;
 }
 
 .instalogger-messages {
@@ -140,17 +140,37 @@
 
 .instalogger-fluid-message-container {
     padding-top: 10px;
-
-    display: table;
+    width:100%;
+    height: 100%;
+    overflow: scroll;
     table-layout: fixed;
+    display: table;
 
+}
+
+.instalogger-panel-row>.panel {
+    display: table-cell;
+    height:100%;
     width:100%;
 }
 
-.instalogger-fluid-message-container>.panel {
-    display: table-cell;
+.instalogger-fluid-message-container>.instalogger-panel-row {
+    display: table-row;
+    height:100%;
+}
+
+
+.instalogger-message-panel-body {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: auto;
+    height: 100%;
 }
 
 .instalogger-panel-server-heading {
     padding: 5px 15px;
+}
+
+html, body {
+    height: 100%;  top:0px; left:0px;bottom:0px; right:0px;  margin:0px;
 }
