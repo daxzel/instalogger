@@ -14,6 +14,9 @@ import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -58,8 +61,8 @@ public class Searcher {
                 try {
                     Document doc = new Document();
                     doc.add(new TextField("text", jsonMessage.getString("text"), Field.Store.NO));
-                    doc.add(new Field("result", jsonMessage.toString(), TYPE_STORED_NOT_INDEXED));
                     doc.add(new LongField("serverId", jsonMessage.getNumber("server_id").intValue(), Field.Store.YES));
+                    doc.add(new LongField("id", jsonMessage.getNumber("id").intValue(), Field.Store.YES));
                     writer.addDocument(doc);
                     writer.commit();
                 } catch (Exception ex) {
@@ -69,7 +72,7 @@ public class Searcher {
         });
     }
 
-    public String getResult(String search, Integer serverId) throws Exception {
+    public List<Integer> getResult(String search, Integer serverId) throws Exception {
         IndexReader reader = DirectoryReader.open(index);
         IndexSearcher searcher = new IndexSearcher(reader);
 
@@ -81,21 +84,17 @@ public class Searcher {
         booleanQuery.add(query1, BooleanClause.Occur.SHOULD);
         booleanQuery.add(query2, BooleanClause.Occur.SHOULD);
 
-        TopScoreDocCollector collector = TopScoreDocCollector.create(100, true);
+        TopScoreDocCollector collector = TopScoreDocCollector.create(10000, true);
         searcher.search(booleanQuery, collector);
         ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("[");
+        List<Integer> list = new ArrayList<>();
         if (hits.length > 0) {
             for (int i = 0; i < hits.length -1 ; i++) {
                 Document doc = searcher.doc(hits[i].doc);
-                stringBuilder.append(doc.get("result"));
-                stringBuilder.append(",");
+                list.add(Integer.valueOf(doc.get("id")));
             }
-            stringBuilder.append(searcher.doc(hits[hits.length - 1].doc).get("result"));
         }
-        stringBuilder.append("]");
-        return stringBuilder.toString();
+        return list;
     }
 }

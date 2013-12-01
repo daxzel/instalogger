@@ -6,6 +6,8 @@ import com.instalogger.helpers.Config;
 import com.instalogger.helpers.DBUpdater;
 import com.instalogger.helpers.JsonHelper;
 import com.instalogger.search.Searcher;
+import com.instalogger.socket.ShowLevelSettings;
+import com.instalogger.socket.SockInfo;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.vertx.java.core.Handler;
@@ -212,7 +214,7 @@ public class MainVerticle extends Verticle {
             public void handle(Message<String> message) {
                 String sockJSId = message.body();
                 Result<ServerRecord> result = dslContext.selectFrom(SERVER).fetch();
-                for(ServerRecord serverRecord : result) {
+                for (ServerRecord serverRecord : result) {
                     JsonObject jsonObject = new JsonObject();
                     jsonObject.putString("sockJs", sockJSId);
                     jsonObject.putNumber("serverId", serverRecord.getId());
@@ -228,47 +230,47 @@ public class MainVerticle extends Verticle {
                 JsonObject request = message.body();
                 Integer serverId = request.getNumber("serverId").intValue();
                 String sockJSId = request.getString("sockJs");
-                ShowLevelSettings showLevelSettings = new ShowLevelSettings(dslContext);
-                String result = JsonHelper.formatJSON(dslContext.select().from(MESSAGE)
-                        .where(serverId != null ? MESSAGE.SERVER_ID.equal(serverId) : MESSAGE.SERVER_ID.isNull())
-                        .and(MESSAGE.LOG_LEVEL.in(showLevelSettings.getShowingLevels()))
-                        .orderBy(MESSAGE.ID.desc()).limit(0, BUFFER_SIZE).fetch());
+                SockInfo sockInfo = (SockInfo) vertx.sharedData().getMap("sockSockets").get(sockJSId);
+
+                SelectConditionStep selectConditionStep = dslContext.select().from(MESSAGE)
+                        .where(MESSAGE.SERVER_ID.equal(serverId))
+                        .and(MESSAGE.LOG_LEVEL.in(sockInfo.getShowLevelSettings().getShowingLevels()));
+
+                try {
+                    if (sockInfo.getSearhTerm() != null) {
+                        selectConditionStep = selectConditionStep
+                                .and(MESSAGE.ID.in(searcher.getResult(sockInfo.getSearhTerm(), serverId)));
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
+                String result = JsonHelper.formatJSON(selectConditionStep.orderBy(MESSAGE.ID.desc())
+                        .limit(0, BUFFER_SIZE).fetch());
+
                 JsonObject jsonResult = new JsonObject();
                 jsonResult.putString("command", "refresh");
                 JsonObject value = new JsonObject();
                 value.putNumber("serverId", serverId);
                 value.putArray("messages", new JsonArray(result));
                 jsonResult.putObject("value", value);
-                ((SockJSSocket)vertx.sharedData().getMap("sockSockets").get(sockJSId))
+                ((SockInfo) vertx.sharedData().getMap("sockSockets").get(sockJSId)).getSocket()
                         .write(new Buffer(jsonResult.toString()));
             }
         });
 
 
-
         sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
+
 
             @Override
             public void handle(final SockJSSocket sock) {
-                vertx.sharedData().getMap("sockSockets").put(sock.writeHandlerID(), sock);
 
                 final ShowLevelSettings settings = new ShowLevelSettings(dslContext);
 
-                sock.dataHandler(new Handler<Buffer>() {
-                    @Override
-                    public void handle(Buffer event) {
-                        JsonObject json = new JsonObject(event.toString());
-                        if (json.getString("command").equals("changeConfig")) {
-                            Integer logLevel = json.getInteger("id");
-                            boolean value = json.getBoolean("value");
-                            if (value) {
-                                settings.enableShowing(logLevel);
-                            } else {
-                                settings.disableShowing(logLevel);
-                            }
-                        }
-                    }
-                });
+                final SockInfo socketInfo = new SockInfo(sock, settings);
+
+                vertx.sharedData().getMap("sockSockets").put(sock.writeHandlerID(), socketInfo);
 
                 eventBus.registerHandler("messageAdded", new Handler<Message>() {
                     @Override
@@ -296,38 +298,29 @@ public class MainVerticle extends Verticle {
                 sock.dataHandler(new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer event) {
-                        Result<ServerRecord> serverRecords = dslContext.selectFrom(SERVER).fetch();
                         JsonObject json = new JsonObject(event.toString());
-                        if (json.getString("command").equals("search")) {
-                            String term = json.getString("term");
-                            if (term != null && !term.isEmpty()) {
-                                for (ServerRecord serverRecord : serverRecords) {
-                                    try {
-                                        String result = searcher.getResult(term, serverRecord.getId());
-                                        JsonObject jsonResult = new JsonObject();
-                                        jsonResult.putString("command", "refresh");
-                                        JsonObject value = new JsonObject();
-                                        value.putNumber("serverId", serverRecord.getId());
-                                        value.putArray("messages", new JsonArray(result));
-                                        jsonResult.putObject("value", value);
-
-                                        if (!sock.writeQueueFull()) {
-                                            sock.write(new Buffer(jsonResult.toString()));
-                                        } else {
-                                            sock.pause();
-                                            sock.drainHandler(new VoidHandler() {
-                                                public void handle() {
-                                                    sock.resume();
-                                                }
-                                            });
-                                        }
-                                    } catch (Exception ex) {
-                                        ex.printStackTrace();
-                                    }
+                        switch (json.getString("command")) {
+                            case "search":
+                                String term = json.getString("term");
+                                if (term != null && !term.isEmpty()) {
+                                    socketInfo.setSearhTerm(term);
+                                } else {
+                                    socketInfo.setSearhTerm(null);
                                 }
-                            } else {
                                 eventBus.send("refreshAll", sock.writeHandlerID());
-                            }
+                                break;
+                            case "changeConfig":
+                                if (json.getString("command").equals("changeConfig")) {
+                                    Integer logLevel = json.getInteger("id");
+                                    boolean value = json.getBoolean("value");
+                                    if (value) {
+                                        settings.enableShowing(logLevel);
+                                    } else {
+                                        settings.disableShowing(logLevel);
+                                    }
+                                    eventBus.send("refreshAll", sock.writeHandlerID());
+                                }
+                                break;
                         }
                     }
                 });

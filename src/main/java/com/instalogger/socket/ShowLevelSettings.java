@@ -1,4 +1,4 @@
-package com.instalogger;
+package com.instalogger.socket;
 
 import com.instalogger.entities.enums.LogLevel;
 import org.jooq.DSLContext;

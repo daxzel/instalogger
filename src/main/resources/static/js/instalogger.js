@@ -240,21 +240,6 @@ function ($scope, $http, $sce, $resource) {
         info.value = level.show;
         info.command = 'changeConfig';
         sock.send(JSON.stringify(info));
-
-        for (var key in $scope.servers) {
-            var server = $scope.servers[key];
-            server.refresh = true
-            server.messages = []
-            $http({
-                method: 'GET',
-                url: '/messages',
-                params: {server_id: server.id}
-            }).success(function (result) {
-                server.messages = result;
-                server.down = false;
-                server.refresh = false
-            });
-        }
     };
 
     $http({
