@@ -29,46 +29,28 @@ instaloggerApp.factory('webSocketMessageFactory', ['$rootScope', function ($root
 }]);
 
 function getServer($http, $scope, message) {
-    if (message.server_id == undefined) {
-        if ($scope.servers.default != undefined) {
-            return $scope.servers.default;
-        } else {
-            return createDefaultServer($scope);
-        }
+    if ($scope.servers[message.server_id] == undefined) {
+        $scope.servers[message.server_id] = {}
+        var server = $scope.servers[message.server_id]
+        server.messages = []
+        server.id = message.server_id;
+        server.refresh = false;
+        server.down = false;
+        $http({
+            method: 'GET',
+            url: '/server',
+            params: {id: server.id}
+        }).success(function (result) {
+            server.name = result.name
+        });
+        return server;
     } else {
-        if ($scope.servers[message.server_id] == undefined) {
-            $scope.servers[message.server_id] = {}
-            var server = $scope.servers[message.server_id]
-            server.messages = []
-            server.id = message.server_id;
-            server.refresh = false;
-            server.down = false;
-            $http({
-                method: 'GET',
-                url: '/server',
-                params: {id: server.id}
-            }).success(function (result) {
-                server.name = result.name
-            });
-            return server;
-        } else {
-            return $scope.servers[message.server_id];
-        }
+        return $scope.servers[message.server_id];
     }
 }
 
-function createDefaultServer($scope) {
-    $scope.servers.default = {}
-    $scope.servers.default.refresh = false
-    $scope.servers.default.id = 'default'
-    $scope.servers.default.name = 'default'
-    $scope.servers.default.down = false;
-    $scope.servers.default.messages = []
-    return $scope.servers.default;
-}
-
-instaloggerApp.controller('messagesController', ['$scope', 'webSocketMessageFactory', '$http', '$sce', '$resource',
-function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
+instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource',
+function ($scope, $http, $sce, $resource) {
     $scope.servers = {}
 
     $scope.unreadErrorMessages = {
@@ -106,28 +88,50 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
         }
     }
 
-    $scope.unreadErrorsUpdated = function() {
+    var sock = new SockJS("/eventbus");
+
+    sock.onopen = function() {
+        sock.onmessage = function (response) {
+            jsonResponse = jQuery.parseJSON(response.data);
+            if (jsonResponse.command == 'sendMessage') {
+                message = jsonResponse.value;
+                var server = getServer($http, $scope, message)
+                if (!server.refresh) {
+                    server.messages.unshift(message);
+                    if (message.log_level == 40000) {
+                        $scope.unreadErrorMessages[message.id] = {};
+                        $scope.unreadErrorMessages.length += 1
+                    }
+                    if (server.messages.length > 100) {
+                        server.messages.pop();
+                    }
+                }
+            } else {
+                if (jsonResponse.command == 'refresh') {
+                    var value = jsonResponse.value;
+                    $scope.$apply(function() {
+                        $scope.servers[value.serverId].messages = value.messages
+                    });
+                }
+            }
+        }
+
+        $scope.$watch('searchText', function(newVal) {
+            var info = {};
+            info.term = newVal;
+            info.command = 'search';
+            sock.send(JSON.stringify(info));
+        });
+    };
+
+    $scope.$watch('unreadErrorMessages', function() {
         Tinycon.setBubble($scope.unreadErrorMessages.length);
         if ($scope.unreadErrorMessages.length > 0) {
             document.title = 'Errors';
         } else {
             document.title = 'Instalogger';
         }
-    }
-
-    $scope.$watch('unreadErrorMessages', function() {
-        $scope.unreadErrorsUpdated();
     }, true);
-
-    $http({
-        method: 'GET',
-        url: '/messages'
-    }).success(function (result) {
-        if (result.length > 0) {
-            server = createDefaultServer($scope)
-            server.messages = result;
-        }
-    });
 
     $scope.overMessage = function(message) {
         if ($scope.unreadErrorMessages[message.id] != undefined) {
@@ -185,8 +189,6 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
             params: {id: server.id}
         }).success(successFunction);
     }
-
-    var sock;
 
     $scope.getClassOfAlert = function(message) {
         return $scope.logLevels[message.log_level].alertStyle
@@ -254,21 +256,6 @@ function ($scope, webSocketMessageFactory, $http, $sce, $resource) {
             });
         }
     };
-
-    sock = new SockJS("/eventbus");
-    webSocketMessageFactory.on(sock, function (message) {
-        var server = getServer($http, $scope, message)
-        if (!server.refresh) {
-            server.messages.unshift(message);
-            if (message.log_level == 40000) {
-                $scope.unreadErrorMessages[message.id] = {};
-                $scope.unreadErrorMessages.length += 1
-            }
-            if (server.messages.length > 100) {
-                server.messages.pop();
-            }
-        }
-    });
 
     $http({
         method: 'GET',

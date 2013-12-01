@@ -1,8 +1,11 @@
 package com.instalogger;
 
+import com.instalogger.entities.generated.tables.records.MessageRecord;
+import com.instalogger.entities.generated.tables.records.ServerRecord;
 import com.instalogger.helpers.Config;
 import com.instalogger.helpers.DBUpdater;
 import com.instalogger.helpers.JsonHelper;
+import com.instalogger.search.Searcher;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.vertx.java.core.Handler;
@@ -13,6 +16,7 @@ import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.sockjs.SockJSServer;
 import org.vertx.java.core.sockjs.SockJSSocket;
@@ -23,9 +27,7 @@ import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.instalogger.entities.generated.Tables.MESSAGE;
-import static com.instalogger.entities.generated.Tables.SERVER;
-import static com.instalogger.entities.generated.Tables.SETTING;
+import static com.instalogger.entities.generated.Tables.*;
 
 public class MainVerticle extends Verticle {
 
@@ -47,6 +49,10 @@ public class MainVerticle extends Verticle {
             return;
         }
 
+        final EventBus eventBus = vertx.eventBus();
+
+        final Searcher searcher = new Searcher(eventBus);
+
         DBUpdater dbUpdater = new DBUpdater(conn);
 
         try {
@@ -55,9 +61,6 @@ public class MainVerticle extends Verticle {
             e.printStackTrace();
             return;
         }
-
-
-        final EventBus eventBus = vertx.eventBus();
 
         final DSLContext dslContext = DSL.using(conn, SQLDialect.POSTGRES);
 
@@ -83,15 +86,9 @@ public class MainVerticle extends Verticle {
             @Override
             public void handle(HttpServerRequest request) {
                 String idParams = request.params().get("id");
-                if (!idParams.equals("default")) {
-                    DeleteQuery deleteQuery = dslContext.deleteQuery(SERVER);
-                    deleteQuery.addConditions(SERVER.ID.equal(Integer.valueOf(idParams)));
-                    deleteQuery.execute();
-                } else {
-                    DeleteQuery deleteQuery = dslContext.deleteQuery(MESSAGE);
-                    deleteQuery.addConditions(MESSAGE.SERVER_ID.isNull());
-                    deleteQuery.execute();
-                }
+                DeleteQuery deleteQuery = dslContext.deleteQuery(SERVER);
+                deleteQuery.addConditions(SERVER.ID.equal(Integer.valueOf(idParams)));
+                deleteQuery.execute();
                 request.response().end();
                 request.response().close();
             }
@@ -120,16 +117,13 @@ public class MainVerticle extends Verticle {
                 String offsetParam = event.params().get("offset");
                 String serverIdParam = event.params().get("server_id");
                 Integer offset = 0;
-                Integer serverId = null;
+                Integer serverId = Integer.valueOf(serverIdParam);
                 ShowLevelSettings showLevelSettings = new ShowLevelSettings(dslContext);
                 if (offsetParam != null) {
                     offset = Integer.valueOf(offsetParam);
                 }
-                if (serverIdParam != null && !serverIdParam.equals("default")) {
-                    serverId = Integer.valueOf(serverIdParam);
-                }
                 String result = JsonHelper.formatJSON(dslContext.select().from(MESSAGE)
-                        .where(serverId != null ? MESSAGE.SERVER_ID.equal(serverId) : MESSAGE.SERVER_ID.isNull())
+                        .where(MESSAGE.SERVER_ID.equal(serverId))
                         .and(MESSAGE.LOG_LEVEL.in(showLevelSettings.getShowingLevels()))
                         .orderBy(MESSAGE.ID.desc()).limit(offset, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
@@ -157,36 +151,39 @@ public class MainVerticle extends Verticle {
                     public void handle(Buffer bufferEvent) {
 
                         String serverName = event.params().get("serverName");
-                        Integer serverId = null;
-                        if (serverName != null) {
-                            Result<Record> servers = dslContext.select()
-                                    .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
-                            if (servers.isEmpty()) {
-                                Record record = dslContext.insertInto(SERVER, SERVER.NAME)
-                                        .values(serverName)
-                                        .returning(SERVER.ID)
-                                        .fetchOne();
-                                serverId = record.getValue(SERVER.ID);
-                            } else {
-                                serverId = servers.get(0).getValue(SERVER.ID);
-                            }
+                        Integer serverId;
+                        if (serverName == null) {
+                            serverName = "default";
+                        }
+                        Result<Record> servers = dslContext.select()
+                                .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
+                        if (servers.isEmpty()) {
+                            ServerRecord serverRecord = dslContext.insertInto(SERVER, SERVER.NAME)
+                                    .values(serverName)
+                                    .returning(SERVER.ID)
+                                    .fetchOne();
+                            serverId = serverRecord.getId();
+                        } else {
+                            serverId = servers.get(0).getValue(SERVER.ID);
                         }
 
                         Integer logLevel = Integer.valueOf(event.params().get("logLevel"));
                         short length = bufferEvent.getShort(0);
                         String text = bufferEvent.getString(2, length);
 
-                        Record message = dslContext
+                        MessageRecord message = dslContext
                                 .insertInto(MESSAGE, MESSAGE.TEXT, MESSAGE.LOG_LEVEL, MESSAGE.SERVER_ID)
                                 .values(text, logLevel, serverId).returning(MESSAGE.ID).fetchOne();
 
-                        JsonObject jsonObject = new JsonObject();
-                        jsonObject.putString("text", text);
-                        jsonObject.putNumber("log_level", logLevel);
-                        jsonObject.putString("create_time", formatter.format(new Date()));
-                        jsonObject.putString("server_id", serverId != null ? serverId.toString() : null);
-                        jsonObject.putNumber("id", message.getValue(MESSAGE.ID));
-                        eventBus.publish("messageAdded", jsonObject);
+                        JsonObject jsonMessage = new JsonObject();
+                        jsonMessage.putString("text", text);
+                        jsonMessage.putNumber("log_level", logLevel);
+                        jsonMessage.putString("create_time", formatter.format(new Date()));
+                        jsonMessage.putNumber("server_id", serverId);
+                        jsonMessage.putNumber("id", message.getId());
+
+
+                        eventBus.publish("messageAdded", jsonMessage);
                         event.response().setChunked(true);
                         event.response().write("ok");
                         event.response().end();
@@ -210,9 +207,51 @@ public class MainVerticle extends Verticle {
 
         SockJSServer sockJSServer = vertx.createSockJSServer(server);
 
+        eventBus.registerHandler("refreshAll", new Handler<Message<String>>() {
+            @Override
+            public void handle(Message<String> message) {
+                String sockJSId = message.body();
+                Result<ServerRecord> result = dslContext.selectFrom(SERVER).fetch();
+                for(ServerRecord serverRecord : result) {
+                    JsonObject jsonObject = new JsonObject();
+                    jsonObject.putString("sockJs", sockJSId);
+                    jsonObject.putNumber("serverId", serverRecord.getId());
+                    eventBus.send("refresh", jsonObject);
+                }
+
+            }
+        });
+
+        eventBus.registerHandler("refresh", new Handler<Message<JsonObject>>() {
+            @Override
+            public void handle(Message<JsonObject> message) {
+                JsonObject request = message.body();
+                Integer serverId = request.getNumber("serverId").intValue();
+                String sockJSId = request.getString("sockJs");
+                ShowLevelSettings showLevelSettings = new ShowLevelSettings(dslContext);
+                String result = JsonHelper.formatJSON(dslContext.select().from(MESSAGE)
+                        .where(serverId != null ? MESSAGE.SERVER_ID.equal(serverId) : MESSAGE.SERVER_ID.isNull())
+                        .and(MESSAGE.LOG_LEVEL.in(showLevelSettings.getShowingLevels()))
+                        .orderBy(MESSAGE.ID.desc()).limit(0, BUFFER_SIZE).fetch());
+                JsonObject jsonResult = new JsonObject();
+                jsonResult.putString("command", "refresh");
+                JsonObject value = new JsonObject();
+                value.putNumber("serverId", serverId);
+                value.putArray("messages", new JsonArray(result));
+                jsonResult.putObject("value", value);
+                ((SockJSSocket)vertx.sharedData().getMap("sockSockets").get(sockJSId))
+                        .write(new Buffer(jsonResult.toString()));
+            }
+        });
+
+
+
         sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
+
             @Override
             public void handle(final SockJSSocket sock) {
+                vertx.sharedData().getMap("sockSockets").put(sock.writeHandlerID(), sock);
+
                 final ShowLevelSettings settings = new ShowLevelSettings(dslContext);
 
                 sock.dataHandler(new Handler<Buffer>() {
@@ -234,9 +273,14 @@ public class MainVerticle extends Verticle {
                 eventBus.registerHandler("messageAdded", new Handler<Message>() {
                     @Override
                     public void handle(Message message) {
-                        if (settings.needShow(((JsonObject) message.body()).getInteger("log_level"))) {
+                        JsonObject jsonMessage = (JsonObject) message.body();
+                        if (settings.needShow(jsonMessage.getInteger("log_level"))) {
+                            JsonObject result = new JsonObject();
+                            result.putString("command", "sendMessage");
+                            result.putObject("value", jsonMessage);
+
                             if (!sock.writeQueueFull()) {
-                                sock.write(new Buffer(message.body().toString()));
+                                sock.write(new Buffer(result.toString()));
                             } else {
                                 sock.pause();
                                 sock.drainHandler(new VoidHandler() {
@@ -248,6 +292,46 @@ public class MainVerticle extends Verticle {
                         }
                     }
                 });
+
+                sock.dataHandler(new Handler<Buffer>() {
+                    @Override
+                    public void handle(Buffer event) {
+                        Result<ServerRecord> serverRecords = dslContext.selectFrom(SERVER).fetch();
+                        JsonObject json = new JsonObject(event.toString());
+                        if (json.getString("command").equals("search")) {
+                            String term = json.getString("term");
+                            if (term != null && !term.isEmpty()) {
+                                for (ServerRecord serverRecord : serverRecords) {
+                                    try {
+                                        String result = searcher.getResult(term, serverRecord.getId());
+                                        JsonObject jsonResult = new JsonObject();
+                                        jsonResult.putString("command", "refresh");
+                                        JsonObject value = new JsonObject();
+                                        value.putNumber("serverId", serverRecord.getId());
+                                        value.putArray("messages", new JsonArray(result));
+                                        jsonResult.putObject("value", value);
+
+                                        if (!sock.writeQueueFull()) {
+                                            sock.write(new Buffer(jsonResult.toString()));
+                                        } else {
+                                            sock.pause();
+                                            sock.drainHandler(new VoidHandler() {
+                                                public void handle() {
+                                                    sock.resume();
+                                                }
+                                            });
+                                        }
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
+                            } else {
+                                eventBus.send("refreshAll", sock.writeHandlerID());
+                            }
+                        }
+                    }
+                });
+
             }
         });
 

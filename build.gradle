@@ -238,5 +238,9 @@ dependencies {
   compile "org.jooq:jooq:3.2.0"
   compile "postgresql:postgresql:9.1-901.jdbc4"
   compile "com.google.guava:guava:15.0"
+  compile 'org.apache.lucene:lucene-core:4.6.0'
+  compile 'org.apache.lucene:lucene-analyzers-common:4.6.0'
+  compile 'org.apache.lucene:lucene-queryparser:4.6.0'
+  compile 'org.apache.lucene:lucene-memory:4.6.0'
 }
 

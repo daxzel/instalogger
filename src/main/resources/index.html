@@ -44,7 +44,7 @@
                 </div>
                 <div class="panel-body">
                     <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
-                         ng-repeat="message in server.messages | filter:searchText" class="alert"
+                         ng-repeat="message in server.messages" class="alert"
                          ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
                 </div>
             </div>
