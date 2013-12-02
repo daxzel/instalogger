@@ -216,20 +216,22 @@ public class MainVerticle extends Verticle {
                 for (ServerRecord serverRecord : result) {
                     JsonObject jsonObject = new JsonObject();
                     jsonObject.putString("sockJs", sockJSId);
+                    jsonObject.putNumber("offset", 0);
                     jsonObject.putNumber("serverId", serverRecord.getId());
-                    eventBus.send("refresh", jsonObject);
+                    eventBus.send("upload", jsonObject);
                 }
 
             }
         });
 
-        eventBus.registerHandler("refresh", new Handler<Message<JsonObject>>() {
+        eventBus.registerHandler("upload", new Handler<Message<JsonObject>>() {
             @Override
             public void handle(Message<JsonObject> message) {
                 JsonObject request = message.body();
                 Integer serverId = request.getNumber("serverId").intValue();
                 String sockJSId = request.getString("sockJs");
                 SockInfo sockInfo = (SockInfo) vertx.sharedData().getMap("sockSockets").get(sockJSId);
+                Integer offset = request.getInteger("offset");
 
                 SelectConditionStep selectConditionStep = dslContext.select().from(MESSAGE)
                         .where(MESSAGE.SERVER_ID.equal(serverId))
@@ -245,10 +247,14 @@ public class MainVerticle extends Verticle {
                 }
 
                 String result = JsonHelper.formatJSON(selectConditionStep.orderBy(MESSAGE.ID.desc())
-                        .limit(0, BUFFER_SIZE).fetch());
+                        .limit(offset, BUFFER_SIZE).fetch());
 
                 JsonObject jsonResult = new JsonObject();
-                jsonResult.putString("command", "refresh");
+                if (offset == 0) {
+                    jsonResult.putString("command", "refresh");
+                } else {
+                    jsonResult.putString("command", "lazyMessagesDownload");
+                }
                 JsonObject value = new JsonObject();
                 value.putNumber("serverId", serverId);
                 value.putArray("messages", new JsonArray(result));
@@ -309,16 +315,21 @@ public class MainVerticle extends Verticle {
                                 eventBus.send("refreshAll", sock.writeHandlerID());
                                 break;
                             case "changeConfig":
-                                if (json.getString("command").equals("changeConfig")) {
-                                    Integer logLevel = json.getInteger("id");
-                                    boolean value = json.getBoolean("value");
-                                    if (value) {
-                                        settings.enableShowing(logLevel);
-                                    } else {
-                                        settings.disableShowing(logLevel);
-                                    }
-                                    eventBus.send("refreshAll", sock.writeHandlerID());
+                                Integer logLevel = json.getInteger("id");
+                                boolean value = json.getBoolean("value");
+                                if (value) {
+                                    settings.enableShowing(logLevel);
+                                } else {
+                                    settings.disableShowing(logLevel);
                                 }
+                                eventBus.send("refreshAll", sock.writeHandlerID());
+                                break;
+                            case "lazyMessagesDownload":
+                                JsonObject uploadRequest = new JsonObject();
+                                uploadRequest.putString("sockJs", sock.writeHandlerID());
+                                uploadRequest.putNumber("offset", json.getNumber("offset"));
+                                uploadRequest.putNumber("serverId", json.getNumber("serverId"));
+                                eventBus.send("upload", uploadRequest);
                                 break;
                         }
                     }
