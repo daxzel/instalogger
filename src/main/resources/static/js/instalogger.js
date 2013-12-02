@@ -12,46 +12,117 @@ if (typeof String.prototype.contains != 'function') {
   };
 }
 
-instaloggerApp.factory('webSocketMessageFactory', ['$rootScope', function ($rootScope) {
-
+instaloggerApp.factory('socket', function ($rootScope) {
+  var sock = new SockJS("/eventbus");
+  var onopenListeners = [];
+   sock.onopen = function () {
+      $rootScope.$apply(function () {
+        for (var i=0; i< onopenListeners.length; i++) {
+            onopenListeners[i]();
+        }
+      });
+    };
   return {
-    on: function (sock, callback) {
-      function wrapper(msg) {
-        $rootScope.$apply(function() {
-          callback(jQuery.parseJSON(msg.data));
+    onopen: function (callback) {
+        onopenListeners.push(callback);
+
+    },
+    onmessage: function (callback) {
+      sock.onmessage = function (data) {
+        $rootScope.$apply(function () {
+          if (callback) {
+            callback(data);
+          }
         });
-      }
-      sock.onopen = function() {
-         sock.onmessage = wrapper;
       }
     },
+    send: function (data) {
+        sock.send(data);
+    }
   };
+});
+
+
+instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', function ($rootScope, socket, $http) {
+
+    getServer = function($http, servers, message) {
+        if (servers[message.server_id] == undefined) {
+            servers[message.server_id] = {}
+            var server = servers[message.server_id]
+            server.messages = []
+            server.id = message.server_id;
+            server.refresh = false;
+            server.down = false;
+            $http({
+                method: 'GET',
+                url: '/server',
+                params: {id: server.id}
+            }).success(function (result) {
+                server.name = result.name
+            });
+            return server;
+        } else {
+            return servers[message.server_id];
+        }
+    }
+
+    var servers = {}
+
+    socket.onopen(function() {
+        socket.onmessage(function (response) {
+            jsonResponse = jQuery.parseJSON(response.data);
+            if (jsonResponse.command == 'sendMessage') {
+                message = jsonResponse.value;
+                var server = getServer($http, servers, message)
+                if (!server.refresh) {
+                    server.messages.unshift(message);
+                    if (message.log_level == 40000) {
+                        $scope.unreadErrorMessages[message.id] = {};
+                        $scope.unreadErrorMessages.length += 1
+                    }
+                    if (server.messages.length > 100) {
+                        server.messages.pop();
+                    }
+                }
+            } else {
+                if (jsonResponse.command == 'refresh') {
+                    var value = jsonResponse.value;
+                    servers[value.serverId].messages = value.messages
+                }
+            }
+        });
+    });
+
+    $http({
+        method: 'GET',
+        url: '/servers'
+    }).success(function (result) {
+        for (var i=0; i < result.length; i++) {
+            var server = {}
+            server.name = result[i].name
+            server.refresh = true
+            server.id = result[i].id
+            servers[server.id] = server
+            $http({
+                method: 'GET',
+                url: '/messages',
+                params: {server_id: server.id}
+            }).success(function (result) {
+                server.messages = result;
+                server.refresh = false
+            });
+        }
+    });
+
+    return servers
+
 }]);
 
-function getServer($http, $scope, message) {
-    if ($scope.servers[message.server_id] == undefined) {
-        $scope.servers[message.server_id] = {}
-        var server = $scope.servers[message.server_id]
-        server.messages = []
-        server.id = message.server_id;
-        server.refresh = false;
-        server.down = false;
-        $http({
-            method: 'GET',
-            url: '/server',
-            params: {id: server.id}
-        }).success(function (result) {
-            server.name = result.name
-        });
-        return server;
-    } else {
-        return $scope.servers[message.server_id];
-    }
-}
 
-instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource',
-function ($scope, $http, $sce, $resource) {
-    $scope.servers = {}
+
+instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource', 'messageServers', 'socket',
+function ($scope, $http, $sce, $resource, messageServers, socket) {
+    $scope.servers = messageServers;
 
     $scope.unreadErrorMessages = {
         length: 0
@@ -88,41 +159,14 @@ function ($scope, $http, $sce, $resource) {
         }
     }
 
-    sock = new SockJS("/eventbus");
-
-    sock.onopen = function() {
-        sock.onmessage = function (response) {
-            jsonResponse = jQuery.parseJSON(response.data);
-            if (jsonResponse.command == 'sendMessage') {
-                message = jsonResponse.value;
-                var server = getServer($http, $scope, message)
-                if (!server.refresh) {
-                    server.messages.unshift(message);
-                    if (message.log_level == 40000) {
-                        $scope.unreadErrorMessages[message.id] = {};
-                        $scope.unreadErrorMessages.length += 1
-                    }
-                    if (server.messages.length > 100) {
-                        server.messages.pop();
-                    }
-                }
-            } else {
-                if (jsonResponse.command == 'refresh') {
-                    var value = jsonResponse.value;
-                    $scope.$apply(function() {
-                        $scope.servers[value.serverId].messages = value.messages
-                    });
-                }
-            }
-        }
-
+    socket.onopen(function() {
         $scope.$watch('searchText', function(newVal) {
             var info = {};
             info.term = newVal;
             info.command = 'search';
-            sock.send(JSON.stringify(info));
+            socket.send(JSON.stringify(info));
         });
-    };
+    })
 
     $scope.$watch('unreadErrorMessages', function() {
         Tinycon.setBubble($scope.unreadErrorMessages.length);
@@ -195,27 +239,30 @@ function ($scope, $http, $sce, $resource) {
     }
 
     $scope.messageScroll = function(server) {
-        if (!server.down) {
-            server.refresh = true
-            $http({
-                method: 'GET',
-                url: '/messages',
-                params: {
-                    server_id: server.id,
-                    offset: server.messages.length
-                }
-            }).success(function (result) {
-                if (result.length == 0) {
-                    server.down = true;
+        if (!server.refresh) {
+            server.refresh = true;
+            if (!server.down) {
+                server.refresh = true
+                $http({
+                    method: 'GET',
+                    url: '/messages',
+                    params: {
+                        server_id: server.id,
+                        offset: server.messages.length
+                    }
+                }).success(function (result) {
+                    if (result.length == 0) {
+                        server.down = true;
+                        server.refresh = false;
+                        return;
+                    }
+                    $scope.servers[server.id].messages = server.messages.concat(result);
                     server.refresh = false;
-                    return;
-                }
-                $scope.servers[server.id].messages = server.messages.concat(result);
-                server.refresh = false;
-            });
-        } else {
-             server.refresh = false;
-        }
+                });
+            } else {
+                 server.refresh = false;
+            }
+         }
     };
 
     $http({
@@ -236,38 +283,15 @@ function ($scope, $http, $sce, $resource) {
         sock.send(JSON.stringify(info));
     };
 
-    $http({
-        method: 'GET',
-        url: '/servers'
-    }).success(function (result) {
-        for (var i=0; i < result.length; i++) {
-            var server = {}
-            server.name = result[i].name
-            server.refresh = true
-            server.id = result[i].id
-            $scope.servers[server.id] = server
-            $http({
-                method: 'GET',
-                url: '/messages',
-                params: {server_id: server.id}
-            }).success(function (result) {
-                server.messages = result;
-                server.refresh = false
-            });
-        }
-    });
+
 }]);
 
 instaloggerApp.directive("instaloggerScroll", function ($window) {
     return function(scope, element, attrs) {
         angular.element($window).bind("scroll", function() {
             var offset = this.pageYOffset;
-            var server = scope.servers[attrs.instaloggerScroll];
             if (offset >= element.height() - 1000) {
-                if (!server.refresh) {
-                    server.refresh = true;
-                    scope.messageScroll(server);
-                }
+                scope.$apply(attrs.instaloggerScroll);
             }
         });
     };

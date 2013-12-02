@@ -42,7 +42,7 @@
                             <span class="glyphicon glyphicon-trash"></span>
                         </button>
                     </div>
-                    <div class="panel-body instalogger-message-panel-body" instalogger-scroll="{{server.id}}">
+                    <div class="panel-body instalogger-message-panel-body" instalogger-scroll="messageScroll(server)">
                         <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
                              ng-repeat="message in server.messages" class="alert"
                              ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
