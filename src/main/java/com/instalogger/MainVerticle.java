@@ -5,7 +5,6 @@ import com.instalogger.entities.generated.tables.records.ServerRecord;
 import com.instalogger.helpers.Config;
 import com.instalogger.helpers.DBUpdater;
 import com.instalogger.helpers.JsonHelper;
-import com.instalogger.search.Searcher;
 import com.instalogger.socket.ShowLevelSettings;
 import com.instalogger.socket.SockInfo;
 import org.jooq.*;
@@ -53,7 +52,7 @@ public class MainVerticle extends Verticle {
 
         final EventBus eventBus = vertx.eventBus();
 
-        final Searcher searcher = new Searcher(eventBus);
+//        final Searcher searcher = new Searcher(eventBus);
 
         DBUpdater dbUpdater = new DBUpdater(conn);
 
@@ -238,8 +237,8 @@ public class MainVerticle extends Verticle {
 
                 try {
                     if (sockInfo.getSearhTerm() != null) {
-                        selectConditionStep = selectConditionStep
-                                .and(MESSAGE.ID.in(searcher.getResult(sockInfo.getSearhTerm(), serverId)));
+                        selectConditionStep = selectConditionStep.and(
+                                DSL.condition("text_tsvector @@  to_tsquery(\'" + sockInfo.getSearhTerm().toLowerCase() + ":*\')"));
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
