@@ -1,2 +1,1 @@
-@ECHO OFF
-%JAVA_HOME%\bin\java -jar ./instalogger-0.1.1-fat.jar -conf ./conf.json
+'%JAVA_HOME%\bin\java' -jar ./instalogger.jar -conf ./conf.json

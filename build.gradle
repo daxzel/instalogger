@@ -144,7 +144,25 @@ task fatJar(dependsOn: modZip, description: 'Creates a fat executable jar which 
     Starter.main(args as String[])
 }
 
-task assembleApp(dependsOn: [fatJar, copyExecutable, log4jModule.log4jJar]) {
+
+
+task renameFatJar(type: Copy, dependsOn: fatJar) {
+    from programDir
+    into programDir
+    rename { String fileName ->
+        fileName = "installogger.jar"
+    }
+    include '*.jar'
+}
+
+task moveFatJar(type: Delete, dependsOn: renameFatJar) {
+    delete  fileTree('src') {
+        from programDir
+        include '*fat.jar'
+    }
+}
+
+task assembleApp(dependsOn: [moveFatJar, copyExecutable, log4jModule.log4jJar]) {
 
 }
 
