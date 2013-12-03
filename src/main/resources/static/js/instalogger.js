@@ -334,4 +334,14 @@ instaloggerApp.directive("instaloggerScroll", function ($window) {
     };
 });
 
+instaloggerApp.directive('serverPing', function() {
+    return {
+        restrict: 'E',
+        transclude: true,
+        template: function ($element, $attrs) {
+            return  '<i class=\"fa fa-circle-o fa-1\"></i>'
+        }
+    }
+});
+
 
