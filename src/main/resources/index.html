@@ -27,11 +27,18 @@
                     {{logLevel.buttonName}}
                 </button>
             </div>
+            <button type="button" class="btn btn-default pull-right"
+                    ng-show="unreadErrorMessages.length > 0"
+                    ng-click="readAll()">
+                <span class="glyphicon glyphicon-check"></span>Read all
+            </button>
 
             <div class="input-group instalogger-search">
                 <input type="text" class="form-control" placeholder="Search..." ng-model="searchText">
                 <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
             </div>
+
+
         </div>
         <div class="instalogger-fluid-container instalogger-fluid-message-container"scroll>
             <div class="instalogger-panel-row">
@@ -45,7 +52,12 @@
                     <div class="panel-body instalogger-message-panel-body" instalogger-scroll="messageScroll(server)">
                         <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
                              ng-repeat="message in server.messages" class="alert"
-                             ng-class="getClassOfAlert(message)" ng-bind-html="showMessage(message)"/>
+                             ng-class="getClassOfAlert(message)">
+                            <span class="label label-danger instalogger-unread-label" ng-show="isUnread(message)">
+                                Unread
+                            </span>
+                            <span ng-bind-html="showMessage(message)" class="instalogger-message-text"></span>
+                        </div>
                     </div>
                 </div>
             </div>

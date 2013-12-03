@@ -22,19 +22,23 @@ instaloggerApp.factory('socket', function ($rootScope) {
             }
         });
     };
+    var onmessageListeners = [];
+    sock.onmessage = function (data) {
+        $rootScope.$apply(function () {
+            for (var i = 0; i < onmessageListeners.length; i++) {
+                onmessageListeners[i](data);
+            }
+        });
+    }
+
     return {
         onopen: function (callback) {
             onopenListeners.push(callback);
 
         },
         onmessage: function (callback) {
-            sock.onmessage = function (data) {
-                $rootScope.$apply(function () {
-                    if (callback) {
-                        callback(data);
-                    }
-                });
-            }
+            onmessageListeners.push(callback);
+
         },
         send: function (data) {
             sock.send(data);
@@ -42,13 +46,37 @@ instaloggerApp.factory('socket', function ($rootScope) {
     };
 });
 
-instaloggerApp.factory('unreadErrorMessages', function ($rootScope) {
+instaloggerApp.factory('unreadErrorMessages',['$rootScope', 'socket', function ($rootScope, socket) {
+
     var unreadErrorMessages = {
         messages: {},
-        length: 0
+        length: 0,
+        readAll: function() {
+            this.messages = {}
+            this.length = 0
+        },
+        read: function(message) {
+            delete this.messages[message.id];
+            this.length -= 1
+        },
+        add: function(message) {
+            this.messages[message.id] = {};
+            this.length += 1
+        }
     }
+
+    socket.onmessage(function (response) {
+        var jsonResponse = jQuery.parseJSON(response.data);
+        if (jsonResponse.command == 'sendMessage') {
+            var message = jsonResponse.value;
+            if (message.log_level == 40000) {
+                unreadErrorMessages.add(message);
+            }
+        }
+    })
+
     return unreadErrorMessages;
-});
+}]);
 
 
 instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unreadErrorMessages',
@@ -79,16 +107,12 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
         socket.onopen(function () {
             socket.onmessage(function (response) {
-                jsonResponse = jQuery.parseJSON(response.data);
+                var jsonResponse = jQuery.parseJSON(response.data);
                 if (jsonResponse.command == 'sendMessage') {
-                    message = jsonResponse.value;
+                    var message = jsonResponse.value;
                     var server = getServer($http, servers, message)
                     if (!server.refresh) {
                         server.messages.unshift(message);
-                        if (message.log_level == 40000) {
-                            unreadErrorMessages.messages[message.id] = {};
-                            unreadErrorMessages.length += 1
-                        }
                         if (server.messages.length > 100) {
                             server.messages.pop();
                         }
@@ -196,9 +220,12 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
 
         $scope.overMessage = function (message) {
             if ($scope.unreadErrorMessages.messages[message.id] != undefined) {
-                delete $scope.unreadErrorMessages.messages[message.id];
-                $scope.unreadErrorMessages.length -= 1
+                $scope.unreadErrorMessages.read(message)
             }
+        }
+
+        $scope.isUnread = function (message) {
+            return $scope.unreadErrorMessages.messages[message.id] != undefined;
         }
 
         $scope.showMessage = function (message) {
@@ -235,6 +262,10 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             }
 
             return $sce.trustAsHtml(result.join(""));
+        }
+
+        $scope.readAll  = function () {
+            $scope.unreadErrorMessages.readAll();
         }
 
         $scope.clearServer = function (server) {

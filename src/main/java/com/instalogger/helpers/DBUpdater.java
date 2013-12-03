@@ -1,5 +1,9 @@
 package com.instalogger.helpers;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
@@ -10,6 +14,8 @@ import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -47,9 +53,18 @@ public class DBUpdater {
 
         URI scriptsUrl = Resources.getResource("db/scripts").toURI();
         File[] scripts = new File(scriptsUrl).listFiles();
+        Function<File, String> getNameFunction = new Function<File, String>() {
+            public String apply(File from) {
+                return from.getName();
+            }
+        };
+        List<File> orderedFiles = Ordering.natural().onResultOf(getNameFunction).
+                sortedCopy(Arrays.asList(scripts));
+
+
         boolean dbVersionChanged = false;
-        for (; dbVersion < scripts.length; dbVersion++) {
-            String script = Files.toString(scripts[dbVersion], Charset.defaultCharset());
+        for (; dbVersion < orderedFiles.size(); dbVersion++) {
+            String script = Files.toString(orderedFiles.get(dbVersion), Charset.defaultCharset());
             conn.prepareCall(script).executeUpdate();
             dbVersionChanged = true;
         }

@@ -102,12 +102,21 @@
     margin-bottom: 5px;
     border: 1px solid transparent;
     border-radius: 4px;
+
+}
+.instalogger-message-text {
     word-wrap: break-word;
     white-space: pre-wrap;
 }
 
+.instalogger-unread-label {
+    position: absolute;
+    right: 20px;
+}
+
 .instalogger-search {
     padding-left: 10px;
+    padding-right: 10px;
 }
 
 .alert-debug {
