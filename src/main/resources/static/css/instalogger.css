@@ -40,8 +40,8 @@
 }
 
 .instalogger-fluid-container {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 0px;
+    padding-right: 0px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -148,7 +148,7 @@
 }
 
 .instalogger-fluid-message-container {
-    padding-top: 10px;
+    padding-top: 0px;
     width:100%;
     height: 100%;
     overflow: scroll;
@@ -179,6 +179,11 @@
 .instalogger-panel-server-heading {
     padding: 5px 15px;
 }
+
+.instalogger-panel-message {
+    border-radius: 0px;
+}
+
 
 html, body {
     height: 100%;  top:0px; left:0px;bottom:0px; right:0px;  margin:0px;
