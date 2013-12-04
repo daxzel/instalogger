@@ -47,6 +47,7 @@
                 <div class="panel panel-info instalogger-panel-message" ng-repeat="server in servers">
                     <div class="panel-heading instalogger-panel-server-heading">
                         <span><server-ping server="server"/></span>
+                        <i class="fa fa-refresh fa-spin" ng-show="server.refresh"></i>
                         {{server.name}}
                         <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
                             <span class="glyphicon glyphicon-trash"></span>
