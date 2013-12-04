@@ -184,6 +184,13 @@
     border-radius: 0px;
 }
 
+.instalogger-ping {
+    color: #AAA;
+}
+
+.instalogger-ping-enable.instalogger-ping {
+    color: #47a447;
+}
 
 html, body {
     height: 100%;  top:0px; left:0px;bottom:0px; right:0px;  margin:0px;

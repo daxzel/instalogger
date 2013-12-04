@@ -281,21 +281,24 @@ public class MainVerticle extends Verticle {
                     @Override
                     public void handle(Message message) {
                         JsonObject jsonMessage = (JsonObject) message.body();
+                        JsonObject result = new JsonObject();
                         if (settings.needShow(jsonMessage.getInteger("log_level"))) {
-                            JsonObject result = new JsonObject();
                             result.putString("command", "sendMessage");
                             result.putObject("value", jsonMessage);
+                        } else {
+                            result.putString("command", "serverPing");
+                            result.putNumber("serverId", jsonMessage.getNumber("server_id"));
+                        }
 
-                            if (!sock.writeQueueFull()) {
-                                sock.write(new Buffer(result.toString()));
-                            } else {
-                                sock.pause();
-                                sock.drainHandler(new VoidHandler() {
-                                    public void handle() {
-                                        sock.resume();
-                                    }
-                                });
-                            }
+                        if (!sock.writeQueueFull()) {
+                            sock.write(new Buffer(result.toString()));
+                        } else {
+                            sock.pause();
+                            sock.drainHandler(new VoidHandler() {
+                                public void handle() {
+                                    sock.resume();
+                                }
+                            });
                         }
                     }
                 });

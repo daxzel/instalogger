@@ -46,7 +46,62 @@ instaloggerApp.factory('socket', function ($rootScope) {
     };
 });
 
-instaloggerApp.factory('unreadErrorMessages',['$rootScope', 'socket', function ($rootScope, socket) {
+instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootScope, socket) {
+
+    var onSendMessageListeners = [];
+    var onRefreshListeners = [];
+    var onLazyMessagesDownloadListeners = [];
+    var onServerPingListeners = [];
+
+
+    socket.onmessage(function (response) {
+        var data = jQuery.parseJSON(response.data);
+        switch (data.command) {
+            case 'sendMessage':
+                for (var i = 0; i < onSendMessageListeners.length; i++) {
+                    onSendMessageListeners[i](data);
+                }
+                break;
+            case 'refresh':
+                for (var i = 0; i < onRefreshListeners.length; i++) {
+                    onRefreshListeners[i](data);
+                }
+                break;
+            case 'lazyMessagesDownload':
+                for (var i = 0; i < onLazyMessagesDownloadListeners.length; i++) {
+                    onLazyMessagesDownloadListeners[i](data);
+                }
+                break;
+            case 'serverPing':
+                for (var i = 0; i < onServerPingListeners.length; i++) {
+                    onServerPingListeners[i](data);
+                }
+                break;
+
+        }
+    });
+    return {
+        onSendMessage: function (callback) {
+            onSendMessageListeners.push(callback);
+
+        },
+        onRefresh: function (callback) {
+            onRefreshListeners.push(callback);
+
+        },
+        onLazyMessagesDownload: function (callback) {
+            onLazyMessagesDownloadListeners.push(callback);
+        },
+        onServerPing: function (callback) {
+            onServerPingListeners.push(callback);
+        }
+    };
+
+}]);
+
+
+instaloggerApp.factory('unreadErrorMessages',['$rootScope', 'socket', 'serverEvents', function ($rootScope, socket,
+                                                                                                serverEvents) {
 
     var unreadErrorMessages = {
         messages: {},
@@ -65,13 +120,10 @@ instaloggerApp.factory('unreadErrorMessages',['$rootScope', 'socket', function (
         }
     }
 
-    socket.onmessage(function (response) {
-        var jsonResponse = jQuery.parseJSON(response.data);
-        if (jsonResponse.command == 'sendMessage') {
-            var message = jsonResponse.value;
-            if (message.log_level == 40000) {
-                unreadErrorMessages.add(message);
-            }
+    serverEvents.onSendMessage(function (data) {
+        var message = data.value;
+        if (message.log_level == 40000) {
+            unreadErrorMessages.add(message);
         }
     })
 
@@ -79,8 +131,8 @@ instaloggerApp.factory('unreadErrorMessages',['$rootScope', 'socket', function (
 }]);
 
 
-instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unreadErrorMessages',
-    function ($rootScope, socket, $http, unreadErrorMessages) {
+instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unreadErrorMessages', 'serverEvents',
+    function ($rootScope, socket, $http, unreadErrorMessages, serverEvents) {
 
         getServer = function ($http, servers, message) {
             if (servers[message.server_id] == undefined) {
@@ -105,37 +157,32 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
         var servers = {}
 
-        socket.onopen(function () {
-            socket.onmessage(function (response) {
-                var jsonResponse = jQuery.parseJSON(response.data);
-                if (jsonResponse.command == 'sendMessage') {
-                    var message = jsonResponse.value;
-                    var server = getServer($http, servers, message)
-                    if (!server.refresh) {
-                        server.messages.unshift(message);
-                        if (server.messages.length > 100) {
-                            server.messages.pop();
-                        }
-                    }
-                } else {
-                    if (jsonResponse.command == 'refresh') {
-                        var value = jsonResponse.value;
-                        var server = servers[value.serverId]
-                        server.messages = value.messages
-                        server.refresh = false
-                        server.down = value.messages.length < 100
-                    } else {
-                        if (jsonResponse.command == 'lazyMessagesDownload') {
-                            var value = jsonResponse.value;
-                            var server = servers[value.serverId]
-                            server.messages = server.messages.concat(value.messages)
-                            server.refresh = false
-                            server.down = value.messages.length < 100
-                        }
-                    }
+        serverEvents.onSendMessage(function (data) {
+            var message = data.value;
+            var server = getServer($http, servers, message)
+            if (!server.refresh) {
+                server.messages.unshift(message);
+                if (server.messages.length > 100) {
+                    server.messages.pop();
                 }
-            });
-        });
+            }
+        })
+
+        serverEvents.onRefresh(function(data) {
+            var value = data.value;
+            var server = servers[value.serverId]
+            server.messages = value.messages
+            server.refresh = false
+            server.down = value.messages.length < 100
+        })
+
+        serverEvents.onLazyMessagesDownload(function (data) {
+            var value = data.value;
+            var server = servers[value.serverId]
+            server.messages = server.messages.concat(value.messages)
+            server.refresh = false
+            server.down = value.messages.length < 100
+        })
 
         $http({
             method: 'GET',
@@ -304,7 +351,7 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
 
         $http({
             method: 'GET',
-            url: '/settings',
+            url: '/settings'
         }).success(function (result) {
                 for (var i = 0; i < result.length; i++) {
                     $scope.logLevels[result[i].id].show = result[i].value == 'true';
@@ -334,14 +381,49 @@ instaloggerApp.directive("instaloggerScroll", function ($window) {
     };
 });
 
-instaloggerApp.directive('serverPing', function() {
+instaloggerApp.directive('serverPing',['serverEvents', function(serverEvents) {
     return {
         restrict: 'E',
+        replace: true,
         transclude: true,
+        scope: {
+            server:'='
+        },
         template: function ($element, $attrs) {
-            return  '<i class=\"fa fa-circle-o fa-1\"></i>'
+            return  '<i class=\"fa fa-circle fa-1 instalogger-ping\"></i>'
+        },
+        link: function (scope,element,attrs){
+            var timer = {
+                getPing : false,
+                work : false,
+                tick : 0
+            }
+            serverEvents.onServerPing(function(data) {
+                if (scope.server.id == data.serverId) {
+                    if (timer.work) {
+                        timer.getPing = true
+                    } else {
+                        timer.work = true
+                        timer.tick  = 0
+                        element.addClass('instalogger-ping-enable')
+                    }
+                }
+            })
+
+            setInterval(function(){
+                timer.tick += 1
+                if (timer.getPing) {
+                    timer.tick = 0;
+                    timer.getPing = false
+                }
+                if (timer.tick > 10) {
+                    timer.work = false
+                    timer.tick = 0;
+                    element.removeClass('instalogger-ping-enable')
+                }
+            }, 100);
         }
     }
-});
+}]);
 
 
