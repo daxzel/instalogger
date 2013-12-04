@@ -150,7 +150,7 @@ task renameFatJar(type: Copy, dependsOn: fatJar) {
     from programDir
     into programDir
     rename { String fileName ->
-        fileName = "installogger.jar"
+        fileName = "instalogger.jar"
     }
     include '*.jar'
 }
