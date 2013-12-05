@@ -372,9 +372,10 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
 
 instaloggerApp.directive("instaloggerScroll", function ($window) {
     return function (scope, element, attrs) {
-        angular.element($window).bind("scroll", function () {
-            var offset = this.pageYOffset;
-            if (offset >= element.height() - 1000) {
+        element.bind("scroll", function () {
+            var offset = element.scrollTop()
+            var height = element[0].scrollHeight
+            if (offset >= height - 1000) {
                 scope.$apply(attrs.instaloggerScroll);
             }
         });
