@@ -135,8 +135,8 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
     function ($rootScope, socket, $http, unreadErrorMessages, serverEvents) {
 
         getServer = function ($http, servers, message) {
-            if (servers[message.server_id] == undefined) {
-                servers[message.server_id] = {}
+            if (servers.values[message.server_id] == undefined) {
+                servers.values[message.server_id] = {}
                 var server = servers[message.server_id]
                 server.messages = []
                 server.id = message.server_id;
@@ -151,15 +151,30 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
                     });
                 return server;
             } else {
-                return servers[message.server_id];
+                return servers.values[message.server_id];
             }
         }
 
         var servers = {}
+        servers.values = {}
+
+        servers.clear = function() {
+            for (var id in servers.values) {
+                servers.values[id].messages = []
+            }
+        }
+
+        servers.refreshClear = function() {
+            for (var id in servers.values) {
+                var server = servers.values[id];
+                servers.values[id].messages = [];
+                server.refresh = true
+            }
+        }
 
         serverEvents.onSendMessage(function (data) {
             var message = data.value;
-            var server = getServer($http, servers, message)
+            var server = getServer($http, servers.values, message)
             if (!server.refresh) {
                 server.messages.unshift(message);
                 if (server.messages.length > 100) {
@@ -170,7 +185,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
         serverEvents.onRefresh(function(data) {
             var value = data.value;
-            var server = servers[value.serverId]
+            var server = servers.values[value.serverId]
             server.messages = value.messages
             server.refresh = false
             server.down = value.messages.length < 100
@@ -178,7 +193,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
         serverEvents.onLazyMessagesDownload(function (data) {
             var value = data.value;
-            var server = servers[value.serverId]
+            var server = servers.values[value.serverId]
             server.messages = server.messages.concat(value.messages)
             server.refresh = false
             server.down = value.messages.length < 100
@@ -193,7 +208,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
                     server.name = result[i].name
                     server.refresh = true
                     server.id = result[i].id
-                    servers[server.id] = server
+                    servers.values[server.id] = server
                     $http({
                         method: 'GET',
                         url: '/messages',
@@ -212,7 +227,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
 instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource', 'messageServers', 'socket',
     'unreadErrorMessages', function ($scope, $http, $sce, $resource, messageServers, socket, unreadErrorMessages) {
-        $scope.servers = messageServers;
+        $scope.servers = messageServers.values;
 
         $scope.unreadErrorMessages = unreadErrorMessages;
 
@@ -247,14 +262,15 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             }
         }
 
-        socket.onopen(function () {
-            $scope.$watch('searchText', function (newVal) {
-                var info = {};
-                info.term = newVal;
-                info.command = 'search';
-                socket.send(JSON.stringify(info));
-            });
-        })
+
+
+        $scope.searchTextChanged = function(text) {
+            var info = {};
+            info.term = text;
+            info.command = 'search';
+            socket.send(JSON.stringify(info));
+            messageServers.refreshClear();
+        }
 
         $scope.$watch('unreadErrorMessages', function () {
             Tinycon.setBubble($scope.unreadErrorMessages.length);
@@ -365,6 +381,7 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             info.value = level.show;
             info.command = 'changeConfig';
             socket.send(JSON.stringify(info));
+            messageServers.refreshClear();
         };
 
 

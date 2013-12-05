@@ -36,7 +36,8 @@
             </button>
 
             <div class="input-group instalogger-search">
-                <input type="text" class="form-control" placeholder="Search..." ng-model="searchText">
+                <input type="text" class="form-control" placeholder="Search..." ng-model="searchText"
+                       ng-change="searchTextChanged(searchText)">
                 <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
             </div>
 
