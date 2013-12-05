@@ -199,6 +199,17 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
             server.down = value.messages.length < 100
         })
 
+        var getMessageForServer = function(server) {
+            $http({
+                method: 'GET',
+                url: '/messages',
+                params: {server_id: server.id}
+            }).success(function (messages) {
+                server.messages = messages;
+                server.refresh = false;
+            });
+        }
+
         $http({
             method: 'GET',
             url: '/servers'
@@ -209,14 +220,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
                     server.refresh = true
                     server.id = result[i].id
                     servers.values[server.id] = server
-                    $http({
-                        method: 'GET',
-                        url: '/messages',
-                        params: {server_id: server.id}
-                    }).success(function (result) {
-                            server.messages = result;
-                            server.refresh = false
-                        });
+                    getMessageForServer(server)
                 }
             });
 
