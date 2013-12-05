@@ -1,4 +1,4 @@
-var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource'])
+var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap'])
 
 if (typeof String.prototype.startsWith != 'function') {
     String.prototype.startsWith = function (str) {
@@ -30,6 +30,15 @@ instaloggerApp.factory('socket', function ($rootScope) {
             }
         });
     }
+    var oncloseListeners = [];
+    sock.onclose = function () {
+        $rootScope.$apply(function () {
+            for (var i = 0; i < oncloseListeners.length; i++) {
+                oncloseListeners[i]();
+            }
+        });
+    }
+
 
     return {
         onopen: function (callback) {
@@ -42,6 +51,9 @@ instaloggerApp.factory('socket', function ($rootScope) {
         },
         send: function (data) {
             sock.send(data);
+        },
+        onclose: function (callback) {
+            oncloseListeners.push(callback);
         }
     };
 });
@@ -230,7 +242,8 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
 
 instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource', 'messageServers', 'socket',
-    'unreadErrorMessages', function ($scope, $http, $sce, $resource, messageServers, socket, unreadErrorMessages) {
+    'unreadErrorMessages', '$modal', function ($scope, $http, $sce, $resource, messageServers, socket,
+                                               unreadErrorMessages, $modal) {
         $scope.servers = messageServers.values;
 
         $scope.unreadErrorMessages = unreadErrorMessages;
@@ -266,6 +279,13 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             }
         }
 
+        socket.onclose(function () {
+            $modal.open({
+                templateUrl: 'connectionLost.html',
+                backdrop: 'static'
+            });
+        });
+
 
 
         $scope.searchTextChanged = function(text) {
@@ -293,42 +313,6 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
 
         $scope.isUnread = function (message) {
             return $scope.unreadErrorMessages.messages[message.id] != undefined;
-        }
-
-        $scope.showMessage = function (message) {
-            strings = message.text.split('\n');
-            result = []
-            result.push('[')
-            result.push(message.create_time)
-            result.push('] ')
-            result.push(strings[0])
-
-            for (var i = 1; i < strings.length; i++) {
-                result.push("<br/>")
-                if (strings[i].startsWith("\tat ")) {
-                    result.push("<b>             ")
-                    if (strings[i].contains('thesis')
-                        || strings[i].contains('docflow')
-                        || strings[i].contains('taskman')) {
-                        result.push('<span style=\"color: green\">')
-                        result.push(strings[i])
-                        result.push('</span>')
-                    } else {
-                        if (strings[i].contains('cuba')) {
-                            result.push('<span style=\"color: blue\">')
-                            result.push(strings[i])
-                            result.push('</span>')
-                        } else {
-                            result.push(strings[i])
-                        }
-                    }
-                    result.push("</b>")
-                } else {
-                    result.push(strings[i])
-                }
-            }
-
-            return $sce.trustAsHtml(result.join(""));
         }
 
         $scope.readAll  = function () {
@@ -447,5 +431,53 @@ instaloggerApp.directive('serverPing',['serverEvents', function(serverEvents) {
         }
     }
 }]);
+
+
+
+instaloggerApp.directive('logMessage',function() {
+    return {
+        restrict: 'E',
+        replace: true,
+        transclude: true,
+        scope: {
+            message:'='
+        },
+        link:function(scope, element, attrs) {
+            var message = scope.message;
+            var strings = scope.message.text.split('\n');
+            var result = []
+            result.push('[')
+            result.push(message.create_time)
+            result.push('] ')
+            result.push(strings[0])
+
+            for (var i = 1; i < strings.length; i++) {
+                result.push("<br/>")
+                if (strings[i].startsWith("\tat ")) {
+                    result.push("<b>             ")
+                    if (strings[i].contains('thesis')
+                        || strings[i].contains('docflow')
+                        || strings[i].contains('taskman')) {
+                        result.push('<span style=\"color: green\">')
+                        result.push(strings[i])
+                        result.push('</span>')
+                    } else {
+                        if (strings[i].contains('cuba')) {
+                            result.push('<span style=\"color: blue\">')
+                            result.push(strings[i])
+                            result.push('</span>')
+                        } else {
+                            result.push(strings[i])
+                        }
+                    }
+                    result.push("</b>")
+                } else {
+                    result.push(strings[i])
+                }
+            }
+            element.replaceWith(result.join(""));
+        }
+    }
+});
 
 

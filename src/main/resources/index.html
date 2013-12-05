@@ -11,63 +11,77 @@
     <script src="//code.jquery.com/jquery.js"></script>
     <script src="static/js/sockjs.js"></script>
     <script src="static/js/angular.min.js"></script>
-    <script src="static/js/bootstrap.min.js"></script>
     <script src="static/js/vertxbus-2.1.js"></script>
     <script src="static/js/angular-sanitize.min.js"></script>
     <script src="static/js/angular-animate.min.js"></script>
     <script src="static/js/angular-resource.min.js"></script>
+    <script src="static/js/ui-bootstrap.min.js"></script>
     <script src="static/js/tinycon.min.js"></script>
     <script src="static/js/instalogger.js"></script>
 
 </head>
 <body ng-app="instaloggerApp">
-    <div class="instalogger-main-container" ng-controller="messagesController">
-        <div class="instalogger-fluid-container instalogger-controls instalogger-controls-fixed">
-            <div class="btn-group pull-left">
-                <button ng-repeat="logLevel in logLevels" type="button" ng-class="{'instalogger-not-active': !logLevel.show}"
-                        class="btn btn-default {{logLevel.buttonStyle}}" ng-click="changeConfig(logLevel)">
-                    {{logLevel.buttonName}}
-                </button>
+<div class="instalogger-main-container" ng-controller="messagesController">
+    <script type="text/ng-template" id="connectionLost.html">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h2><p class="text-danger">Connection to the server lost</p></h2>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="/">Reload</a>
+                </div>
             </div>
-            <button type="button" class="btn btn-default pull-right"
-                    ng-show="unreadErrorMessages.length > 0"
-                    ng-click="readAll()">
-                <span class="glyphicon glyphicon-check"></span>Read all
-            </button>
-
-            <div class="input-group instalogger-search">
-                <input type="text" class="form-control" placeholder="Search..." ng-model="searchText"
-                       ng-change="searchTextChanged(searchText)">
-                <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
-            </div>
-
-
         </div>
-        <div class="instalogger-fluid-container instalogger-fluid-message-container"scroll>
-            <div class="instalogger-panel-row">
-                <div class="panel panel-info instalogger-panel-message" ng-repeat="server in servers">
-                    <div class="panel-heading instalogger-panel-server-heading">
-                        <span><server-ping server="server"/></span>
-                        <i class="fa fa-refresh fa-spin" ng-show="server.refresh"></i>
-                        {{server.name}}
-                        <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
-                            <span class="glyphicon glyphicon-trash"></span>
-                        </button>
-                    </div>
-                    <div class="panel-body instalogger-message-panel-body" instalogger-scroll="messageScroll(server)">
-                        <div id="{{ 'outer-' + server.id }}" style="overflow-y:hidden;">
+    </script>
+
+    <div class="instalogger-fluid-container instalogger-controls instalogger-controls-fixed">
+        <div class="btn-group pull-left">
+            <button ng-repeat="logLevel in logLevels" type="button"
+                    ng-class="{'instalogger-not-active': !logLevel.show}"
+                    class="btn btn-default {{logLevel.buttonStyle}}" ng-click="changeConfig(logLevel)">
+                {{logLevel.buttonName}}
+            </button>
+        </div>
+        <button type="button" class="btn btn-default pull-right"
+                ng-show="unreadErrorMessages.length > 0"
+                ng-click="readAll()">
+            <span class="glyphicon glyphicon-check"></span>Read all
+        </button>
+
+        <div class="input-group instalogger-search">
+            <input type="text" class="form-control" placeholder="Search..." ng-model="searchText"
+                   ng-change="searchTextChanged(searchText)">
+            <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
+        </div>
+    </div>
+
+    <div class="instalogger-fluid-container instalogger-fluid-message-container" scroll>
+        <div class="instalogger-panel-row">
+            <div class="panel panel-info instalogger-panel-message" ng-repeat="server in servers">
+                <div class="panel-heading instalogger-panel-server-heading">
+                    <span><server-ping server="server"/></span>
+                    <i class="fa fa-refresh fa-spin" ng-show="server.refresh"></i>
+                    {{server.name}}
+                    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </div>
+                <div class="panel-body instalogger-message-panel-body" instalogger-scroll="messageScroll(server)">
+                    <div id="{{ 'outer-' + server.id }}" style="overflow-y:hidden;">
                         <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
                              ng-repeat="message in server.messages" class="alert"
                              ng-class="getClassOfAlert(message)">
                             <span class="label label-danger instalogger-unread-label" ng-show="isUnread(message)">
                                 Unread
                             </span>
-                            <span ng-bind-html="showMessage(message)" class="instalogger-message-text"></span>
+                            <span class="instalogger-message-text"><log-message message="message"/></span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 </body>
 </html>

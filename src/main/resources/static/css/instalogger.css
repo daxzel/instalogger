@@ -195,3 +195,9 @@
 html, body {
     height: 100%;  top:0px; left:0px;bottom:0px; right:0px;  margin:0px;
 }
+
+.modal {
+    display: block;
+    height: 0;
+    overflow: visible;
+}
