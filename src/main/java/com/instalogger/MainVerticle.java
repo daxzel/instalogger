@@ -4,9 +4,11 @@ import com.instalogger.entities.generated.tables.records.MessageRecord;
 import com.instalogger.entities.generated.tables.records.ServerRecord;
 import com.instalogger.helpers.Config;
 import com.instalogger.helpers.DBUpdater;
+import com.instalogger.helpers.InstaDataSource;
 import com.instalogger.helpers.JsonHelper;
 import com.instalogger.socket.ShowLevelSettings;
 import com.instalogger.socket.SockInfo;
+import org.apache.commons.dbcp.BasicDataSource;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.vertx.java.core.Handler;
@@ -38,13 +40,17 @@ public class MainVerticle extends Verticle {
 
     public void start() {
 
-        Connection conn;
-
         Config conf = Config.fromJson(container.config());
+        InstaDataSource dataSource = new InstaDataSource();
+        dataSource.setUser(conf.user);
+        dataSource.setPassword(conf.password);
+        dataSource.setDatabaseName(conf.database);
 
         try {
             Class.forName("org.postgresql.Driver").newInstance();
-            conn = DriverManager.getConnection(conf.url, conf.user, conf.password);
+
+            DBUpdater dbUpdater = new DBUpdater(dataSource.getConnection());
+            dbUpdater.create();
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -52,23 +58,11 @@ public class MainVerticle extends Verticle {
 
         final EventBus eventBus = vertx.eventBus();
 
-//        final Searcher searcher = new Searcher(eventBus);
-
-        DBUpdater dbUpdater = new DBUpdater(conn);
-
-        try {
-            dbUpdater.create();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-
-        final DSLContext dslContext = DSL.using(conn, SQLDialect.POSTGRES);
+        final DSLContext dslContext = DSL.using(dataSource, SQLDialect.POSTGRES);
 
         RouteMatcher routeMatcher = new RouteMatcher();
 
         RESTCreator creator = new RESTCreator(routeMatcher, dslContext);
-
 
         routeMatcher.get("/", new Handler<HttpServerRequest>() {
             @Override

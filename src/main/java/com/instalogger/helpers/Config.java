@@ -13,7 +13,7 @@ public class Config {
 
     public int port = 18080;
     public String password = "root";
-    public String url = "jdbc:postgresql://localhost/instalogger";
+    public String database = "instalogger";
     public String user = "root";
 
     public static Config fromJson(JsonObject conf) {
@@ -31,7 +31,7 @@ public class Config {
         if (db != null) {
             result.user = db.getString("user");
             result.password = db.getString("password");
-            result.url = db.getString("url");
+            result.database = db.getString("database");
         }
 
         return result;
