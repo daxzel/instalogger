@@ -149,7 +149,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
         getServer = function ($http, servers, message) {
             if (servers.values[message.server_id] == undefined) {
                 servers.values[message.server_id] = {}
-                var server = servers[message.server_id]
+                var server = servers.values[message.server_id]
                 server.messages = []
                 server.id = message.server_id;
                 server.refresh = false;
@@ -186,7 +186,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
         serverEvents.onSendMessage(function (data) {
             var message = data.value;
-            var server = getServer($http, servers.values, message)
+            var server = getServer($http, servers, message)
             if (!server.refresh) {
                 server.messages.unshift(message);
                 if (server.messages.length > 100) {
