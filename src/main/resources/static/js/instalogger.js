@@ -73,6 +73,9 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
                 for (var i = 0; i < onSendMessageListeners.length; i++) {
                     onSendMessageListeners[i](data);
                 }
+                for (var i = 0; i < onServerPingListeners.length; i++) {
+                    onServerPingListeners[i](data.value.server_id);
+                }
                 break;
             case 'refresh':
                 for (var i = 0; i < onRefreshListeners.length; i++) {
@@ -86,7 +89,7 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
                 break;
             case 'serverPing':
                 for (var i = 0; i < onServerPingListeners.length; i++) {
-                    onServerPingListeners[i](data);
+                    onServerPingListeners[i](data.serverId);
                 }
                 break;
 
@@ -404,8 +407,8 @@ instaloggerApp.directive('serverPing',['serverEvents', function(serverEvents) {
                 work : false,
                 tick : 0
             }
-            serverEvents.onServerPing(function(data) {
-                if (scope.server.id == data.serverId) {
+            serverEvents.onServerPing(function(serverId) {
+                if (scope.server.id == serverId) {
                     if (timer.work) {
                         timer.getPing = true
                     } else {
@@ -427,7 +430,7 @@ instaloggerApp.directive('serverPing',['serverEvents', function(serverEvents) {
                     timer.tick = 0;
                     element.removeClass('instalogger-ping-enable')
                 }
-            }, 100);
+            }, 1000);
         }
     }
 }]);
