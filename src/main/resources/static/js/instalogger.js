@@ -436,8 +436,27 @@ instaloggerApp.directive('serverPing',['serverEvents', function(serverEvents) {
 }]);
 
 
+function parseExceptionString(s) {
+    var stackTrace = s.split(' ')[1];
+    var pacckages = stackTrace.split('.');
+    var clazz = (stackTrace.split('(')[1]).split(':');
+    var className = clazz[0];
+    var stringNumber = (clazz[1]).split(')')[0];
+    var result = []
+    for (var i = 0; i < pacckages.length - 3; i++) {
+        result.push(pacckages[i])
+        result.push("/")
+    }
+    result.push(className)
 
-instaloggerApp.directive('logMessage',function() {
+    var distinguishClass = s.split("(");
+
+    return distinguishClass[0] + "(<a ng-click=\"ideOpen('" + result.join("") + "','"
+        + stringNumber +"')\">" + distinguishClass[1].split(")")[0]+ "</a>)"
+}
+
+
+instaloggerApp.directive('logMessage',['$http', '$compile', function($http, $compile) {
     return {
         restrict: 'E',
         replace: true,
@@ -454,6 +473,17 @@ instaloggerApp.directive('logMessage',function() {
             result.push('] ')
             result.push(strings[0])
 
+            scope.ideOpen = function(className, stringNumber) {
+                $http({
+                    method: 'GET',
+                    url: 'http://localhost:63330/file',
+                    params: {
+                        file: className,
+                        line: stringNumber
+                    }
+                })
+            }
+
             for (var i = 1; i < strings.length; i++) {
                 result.push("<br/>")
                 if (strings[i].startsWith("\tat ")) {
@@ -462,12 +492,12 @@ instaloggerApp.directive('logMessage',function() {
                         || strings[i].contains('docflow')
                         || strings[i].contains('taskman')) {
                         result.push('<span style=\"color: green\">')
-                        result.push(strings[i])
+                        result.push(parseExceptionString(strings[i]))
                         result.push('</span>')
                     } else {
                         if (strings[i].contains('cuba')) {
                             result.push('<span style=\"color: blue\">')
-                            result.push(strings[i])
+                            result.push(parseExceptionString(strings[i]))
                             result.push('</span>')
                         } else {
                             result.push(strings[i])
@@ -478,9 +508,10 @@ instaloggerApp.directive('logMessage',function() {
                     result.push(strings[i])
                 }
             }
-            element.replaceWith(result.join(""));
+            element.html(result.join(""));
+            $compile(element.contents())(scope);
         }
     }
-});
+}]);
 
 

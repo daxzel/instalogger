@@ -8,7 +8,6 @@ import com.instalogger.helpers.InstaDataSource;
 import com.instalogger.helpers.JsonHelper;
 import com.instalogger.socket.ShowLevelSettings;
 import com.instalogger.socket.SockInfo;
-import org.apache.commons.dbcp.BasicDataSource;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.vertx.java.core.Handler;
