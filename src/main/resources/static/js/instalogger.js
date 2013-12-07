@@ -300,8 +300,13 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
         }
 
         $scope.$watch('unreadErrorMessages', function () {
-            Tinycon.setBubble($scope.unreadErrorMessages.length);
-            if ($scope.unreadErrorMessages.length > 0) {
+            var length = $scope.unreadErrorMessages.length;
+            if (length < 100) {
+                Tinycon.setBubble(length);
+            } else {
+                Tinycon.setBubble(99);
+            }
+            if (length > 0) {
                 document.title = 'Errors';
             } else {
                 document.title = 'Instalogger';
