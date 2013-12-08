@@ -386,7 +386,6 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             messageServers.refreshClear();
         };
 
-
     }]);
 
 instaloggerApp.directive("instaloggerScroll", function ($window) {
@@ -508,7 +507,8 @@ instaloggerApp.directive('logMessage', ['$http', '$compile', function ($http, $c
                         result.push("<b>             ")
                         if (strings[i].contains('thesis')
                             || strings[i].contains('docflow')
-                            || strings[i].contains('taskman')) {
+                            || strings[i].contains('taskman')
+                            || strings[i].contains('.ext.')) {
                             result.push('<span style=\"color: green\">')
                             result.push(parseExceptionString(strings[i]))
                             result.push('</span>')
