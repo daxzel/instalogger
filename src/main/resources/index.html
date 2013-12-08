@@ -37,20 +37,20 @@
     </script>
 
     <div class="instalogger-fluid-container instalogger-controls instalogger-controls-fixed">
-        <div class="btn-group pull-left">
+        <div class="btn-group btn-group-sm pull-left">
             <button ng-repeat="logLevel in logLevels" type="button"
                     ng-class="{'instalogger-not-active': !logLevel.show}"
                     class="btn btn-default {{logLevel.buttonStyle}}" ng-click="changeConfig(logLevel)">
                 {{logLevel.buttonName}}
             </button>
         </div>
-        <button type="button" class="btn btn-default pull-right"
+        <button type="button" class="btn btn-default btn-sm pull-right"
                 ng-show="unreadErrorMessages.length > 0"
                 ng-click="readAll()">
             <span class="glyphicon glyphicon-check"></span>Read all
         </button>
 
-        <div class="input-group instalogger-search">
+        <div class="input-group instalogger-search input-group-sm">
             <input type="text" class="form-control" placeholder="Search..." ng-model="searchText"
                    ng-change="searchTextChanged(searchText)">
             <span class="input-group-addon"><span class="glyphicon glyphicon-search"/></span>
@@ -59,7 +59,7 @@
 
     <div class="instalogger-fluid-container instalogger-fluid-message-container" scroll>
         <div class="instalogger-panel-row">
-            <div class="panel panel-info instalogger-panel-message" ng-repeat="server in servers">
+            <div class="panel panel-default instalogger-panel-message" ng-repeat="server in servers">
                 <div class="panel-heading instalogger-panel-server-heading">
                     <span><server-ping server="server"/></span>
                     <i class="fa fa-refresh fa-spin" ng-show="server.refresh"></i>
@@ -75,9 +75,10 @@
                              ng-class="getClassOfAlert(message)">
                             <button type="button" class="btn btn-default btn-xs" clip-copy="message.text"
                                     ng-show="isError(message)">
-                                <span class="fa fa-clipboard fa-1"/>Copy
+                                <span class="fa fa-clipboard"/>Copy
                             </button>
                             <span class="label label-danger instalogger-unread-label" ng-show="isUnread(message)">
+                                <span class="glyphicon glyphicon-eye-close"></span>
                                 Unread
                             </span>
                             <span class="instalogger-message-text"><log-message message="message"/></span>
