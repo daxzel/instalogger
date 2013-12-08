@@ -115,21 +115,20 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
 }]);
 
 
-instaloggerApp.factory('unreadErrorMessages',['$rootScope', 'socket', 'serverEvents', function ($rootScope, socket,
-                                                                                                serverEvents) {
+instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEvents', function ($rootScope, socket, serverEvents) {
 
     var unreadErrorMessages = {
         messages: {},
         length: 0,
-        readAll: function() {
+        readAll: function () {
             this.messages = {}
             this.length = 0
         },
-        read: function(message) {
+        read: function (message) {
             delete this.messages[message.id];
             this.length -= 1
         },
-        add: function(message) {
+        add: function (message) {
             this.messages[message.id] = {};
             this.length += 1
         }
@@ -173,13 +172,13 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
         var servers = {}
         servers.values = {}
 
-        servers.clear = function() {
+        servers.clear = function () {
             for (var id in servers.values) {
                 servers.values[id].messages = []
             }
         }
 
-        servers.refreshClear = function() {
+        servers.refreshClear = function () {
             for (var id in servers.values) {
                 var server = servers.values[id];
                 servers.values[id].messages = [];
@@ -198,7 +197,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
             }
         })
 
-        serverEvents.onRefresh(function(data) {
+        serverEvents.onRefresh(function (data) {
             var value = data.value;
             var server = servers.values[value.serverId]
             server.messages = value.messages
@@ -214,15 +213,15 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
             server.down = value.messages.length < 100
         })
 
-        var getMessageForServer = function(server) {
+        var getMessageForServer = function (server) {
             $http({
                 method: 'GET',
                 url: '/messages',
                 params: {server_id: server.id}
             }).success(function (messages) {
-                server.messages = messages;
-                server.refresh = false;
-            });
+                    server.messages = messages;
+                    server.refresh = false;
+                });
         }
 
         $http({
@@ -245,8 +244,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
 
 instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource', 'messageServers', 'socket',
-    'unreadErrorMessages', '$modal', function ($scope, $http, $sce, $resource, messageServers, socket,
-                                               unreadErrorMessages, $modal) {
+    'unreadErrorMessages', '$modal', function ($scope, $http, $sce, $resource, messageServers, socket, unreadErrorMessages, $modal) {
         $scope.servers = messageServers.values;
 
         $scope.unreadErrorMessages = unreadErrorMessages;
@@ -290,8 +288,7 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
         });
 
 
-
-        $scope.searchTextChanged = function(text) {
+        $scope.searchTextChanged = function (text) {
             var info = {};
             info.term = text;
             info.command = 'search';
@@ -323,7 +320,7 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             return $scope.unreadErrorMessages.messages[message.id] != undefined;
         }
 
-        $scope.readAll  = function () {
+        $scope.readAll = function () {
             $scope.unreadErrorMessages.readAll();
         }
 
@@ -395,36 +392,36 @@ instaloggerApp.directive("instaloggerScroll", function ($window) {
     };
 });
 
-instaloggerApp.directive('serverPing',['serverEvents', function(serverEvents) {
+instaloggerApp.directive('serverPing', ['serverEvents', function (serverEvents) {
     return {
         restrict: 'E',
         replace: true,
         transclude: true,
         scope: {
-            server:'='
+            server: '='
         },
         template: function ($element, $attrs) {
             return  '<i class=\"fa fa-circle fa-1 instalogger-ping\"></i>'
         },
-        link: function (scope,element,attrs){
+        link: function (scope, element, attrs) {
             var timer = {
-                getPing : false,
-                work : false,
-                tick : 0
+                getPing: false,
+                work: false,
+                tick: 0
             }
-            serverEvents.onServerPing(function(serverId) {
+            serverEvents.onServerPing(function (serverId) {
                 if (scope.server.id == serverId) {
                     if (timer.work) {
                         timer.getPing = true
                     } else {
                         timer.work = true
-                        timer.tick  = 0
+                        timer.tick = 0
                         element.addClass('instalogger-ping-enable')
                     }
                 }
             })
 
-            setInterval(function(){
+            setInterval(function () {
                 timer.tick += 1
                 if (timer.getPing) {
                     timer.tick = 0;
@@ -442,79 +439,89 @@ instaloggerApp.directive('serverPing',['serverEvents', function(serverEvents) {
 
 
 function parseExceptionString(s) {
-    var stackTrace = s.split(' ')[1];
-    var pacckages = stackTrace.split('.');
-    var clazz = (stackTrace.split('(')[1]).split(':');
-    var className = clazz[0];
-    var stringNumber = (clazz[1]).split(')')[0];
-    var result = []
-    for (var i = 0; i < pacckages.length - 3; i++) {
-        result.push(pacckages[i])
-        result.push("/")
+    try {
+        var stackTrace = s.split(' ')[1];
+        var pacckages = stackTrace.split('.');
+        var clazz = (stackTrace.split('(')[1]).split(':');
+        var className = clazz[0];
+        var stringNumber = (clazz[1]).split(')')[0];
+        var result = []
+        for (var i = 0; i < pacckages.length - 3; i++) {
+            result.push(pacckages[i])
+            result.push("/")
+        }
+        result.push(className)
+
+        var distinguishClass = s.split("(");
+
+        return distinguishClass[0] + "(<a ng-click=\"ideOpen('" + result.join("") + "','"
+            + stringNumber + "')\">" + distinguishClass[1].split(")")[0] + "</a>)"
+    } catch (e) {
+        return s;
     }
-    result.push(className)
-
-    var distinguishClass = s.split("(");
-
-    return distinguishClass[0] + "(<a ng-click=\"ideOpen('" + result.join("") + "','"
-        + stringNumber +"')\">" + distinguishClass[1].split(")")[0]+ "</a>)"
 }
 
 
-instaloggerApp.directive('logMessage',['$http', '$compile', function($http, $compile) {
+instaloggerApp.directive('logMessage', ['$http', '$compile', function ($http, $compile) {
     return {
         restrict: 'E',
         replace: true,
         transclude: true,
         scope: {
-            message:'='
+            message: '='
         },
-        link:function(scope, element, attrs) {
+        link: function (scope, element, attrs) {
             var message = scope.message;
-            var strings = scope.message.text.split('\n');
-            var result = []
-            result.push('[')
-            result.push(message.create_time)
-            result.push('] ')
-            result.push(strings[0])
+            if (message.log_level == 40000) {
+                var strings = scope.message.text.split('\n');
+                var result = []
+                result.push('[')
+                result.push(message.create_time)
+                result.push('] ')
+                result.push("<b>")
+                result.push(strings[0])
+                result.push("</b>")
 
-            scope.ideOpen = function(className, stringNumber) {
-                $http({
-                    method: 'GET',
-                    url: 'http://localhost:63330/file',
-                    params: {
-                        file: className,
-                        line: stringNumber
-                    }
-                })
-            }
+                scope.ideOpen = function (className, stringNumber) {
+                    $http({
+                        method: 'GET',
+                        url: 'http://localhost:63330/file',
+                        params: {
+                            file: className,
+                            line: stringNumber
+                        }
+                    })
+                }
 
-            for (var i = 1; i < strings.length; i++) {
-                result.push("<br/>")
-                if (strings[i].startsWith("\tat ")) {
-                    result.push("<b>             ")
-                    if (strings[i].contains('thesis')
-                        || strings[i].contains('docflow')
-                        || strings[i].contains('taskman')) {
-                        result.push('<span style=\"color: green\">')
-                        result.push(parseExceptionString(strings[i]))
-                        result.push('</span>')
-                    } else {
-                        if (strings[i].contains('cuba')) {
-                            result.push('<span style=\"color: blue\">')
+                for (var i = 1; i < strings.length; i++) {
+                    result.push("<br/>")
+                    if (strings[i].startsWith("\tat ")) {
+                        result.push("<b>             ")
+                        if (strings[i].contains('thesis')
+                            || strings[i].contains('docflow')
+                            || strings[i].contains('taskman')) {
+                            result.push('<span style=\"color: green\">')
                             result.push(parseExceptionString(strings[i]))
                             result.push('</span>')
                         } else {
-                            result.push(strings[i])
+                            if (strings[i].contains('cuba')) {
+                                result.push('<span style=\"color: blue\">')
+                                result.push(parseExceptionString(strings[i]))
+                                result.push('</span>')
+                            } else {
+                                result.push(parseExceptionString(strings[i]))
+                            }
                         }
+                        result.push("</b>")
+                    } else {
+                        result.push("<b>")
+                        result.push(strings[i])
+                        result.push("</b>")
                     }
-                    result.push("</b>")
-                } else {
-                    result.push(strings[i])
                 }
+                element.html(result.join(""));
+                $compile(element.contents())(scope);
             }
-            element.html(result.join(""));
-            $compile(element.contents())(scope);
         }
     }
 }]);
