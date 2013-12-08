@@ -1,4 +1,5 @@
-var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap'])
+var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap',
+    'ngClipboard'])
 
 if (typeof String.prototype.startsWith != 'function') {
     String.prototype.startsWith = function (str) {
@@ -10,6 +11,10 @@ if (typeof String.prototype.contains != 'function') {
     String.prototype.contains = function (str) {
         return this.indexOf(str) != -1;
     };
+}
+
+function isError(message) {
+    return (message.log_level == 40000)
 }
 
 instaloggerApp.factory('socket', function ($rootScope) {
@@ -136,7 +141,7 @@ instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEv
 
     serverEvents.onSendMessage(function (data) {
         var message = data.value;
-        if (message.log_level == 40000) {
+        if (isError(message)) {
             unreadErrorMessages.add(message);
         }
     })
@@ -287,6 +292,10 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             });
         });
 
+
+        $scope.isError = function (message) {
+            return isError(message);
+        }
 
         $scope.searchTextChanged = function (text) {
             var info = {};
@@ -472,7 +481,7 @@ instaloggerApp.directive('logMessage', ['$http', '$compile', function ($http, $c
         },
         link: function (scope, element, attrs) {
             var message = scope.message;
-            if (message.log_level == 40000) {
+            if (isError(message)) {
                 var strings = scope.message.text.split('\n');
                 var result = []
                 result.push('[')
@@ -521,6 +530,8 @@ instaloggerApp.directive('logMessage', ['$http', '$compile', function ($http, $c
                 }
                 element.html(result.join(""));
                 $compile(element.contents())(scope);
+            } else {
+                element.html(message.text);
             }
         }
     }
