@@ -67,16 +67,29 @@
                     <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
                         <span class="glyphicon glyphicon-trash"></span>
                     </button>
+
+                    <span class="label label-danger" ng-repeat="repeatedMessage in repeatedMessages">
+                        {{repeatedMessage.count + ' ' +repeatedMessage.name}}
+                    </span>
                 </div>
                 <div class="panel-body instalogger-message-panel-body" instalogger-scroll="messageScroll(server)">
                     <div id="{{ 'outer-' + server.id }}" style="overflow-y:hidden;">
                         <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
                              ng-repeat="message in server.messages" class="alert"
                              ng-class="getClassOfAlert(message)">
-                            <button type="button" class="btn btn-default btn-xs" clip-copy="message.text"
-                                    ng-show="isError(message)">
-                                <span class="fa fa-clipboard"/>Copy
-                            </button>
+
+                            <div class="btn-group btn-group-xs">
+                                <button type="button" class="btn btn-default btn-xs" clip-copy="message.text"
+                                        ng-show="isError(message)">
+                                    <span class="fa fa-clipboard"/>Copy
+                                </button>
+
+                                <button type="button" class="btn btn-default btn-xs" ng-click="addRepeatedMessage(message)">
+                                    <span class="fa fa-unlock-alt"/>Repeated
+                                </button>
+                            </div>
+
+
                             <span class="label label-danger instalogger-unread-label" ng-show="isUnread(message)">
                                 <span class="glyphicon glyphicon-eye-close"></span>
                                 Unread

@@ -19,6 +19,7 @@ public class Keys {
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.Identity<com.instalogger.entities.generated.tables.records.MessageRecord, java.lang.Integer> IDENTITY_MESSAGE = Identities0.IDENTITY_MESSAGE;
+	public static final org.jooq.Identity<com.instalogger.entities.generated.tables.records.RepeatedMessageRecord, java.lang.Integer> IDENTITY_REPEATED_MESSAGE = Identities0.IDENTITY_REPEATED_MESSAGE;
 	public static final org.jooq.Identity<com.instalogger.entities.generated.tables.records.ServerRecord, java.lang.Integer> IDENTITY_SERVER = Identities0.IDENTITY_SERVER;
 
 	// -------------------------------------------------------------------------
@@ -26,6 +27,7 @@ public class Keys {
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.MessageRecord> MESSAGE_PKEY = UniqueKeys0.MESSAGE_PKEY;
+	public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.RepeatedMessageRecord> REPEATED_MESSAGE_PKEY = UniqueKeys0.REPEATED_MESSAGE_PKEY;
 	public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.ServerRecord> SERVER_PKEY = UniqueKeys0.SERVER_PKEY;
 	public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.SettingRecord> SETTING_PKEY = UniqueKeys0.SETTING_PKEY;
 	public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.SystemRecord> SYSTEM_PKEY = UniqueKeys0.SYSTEM_PKEY;
@@ -35,6 +37,7 @@ public class Keys {
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.ForeignKey<com.instalogger.entities.generated.tables.records.MessageRecord, com.instalogger.entities.generated.tables.records.ServerRecord> MESSAGE__MESSAGE_SERVER = ForeignKeys0.MESSAGE__MESSAGE_SERVER;
+	public static final org.jooq.ForeignKey<com.instalogger.entities.generated.tables.records.RepeatedMessageRecord, com.instalogger.entities.generated.tables.records.ServerRecord> REPEATED_MESSAGE__REPEATED_MESSAGE_SERVER = ForeignKeys0.REPEATED_MESSAGE__REPEATED_MESSAGE_SERVER;
 
 	// -------------------------------------------------------------------------
 	// [#1459] distribute members to avoid static initialisers > 64kb
@@ -42,11 +45,13 @@ public class Keys {
 
 	private static class Identities0 extends org.jooq.impl.AbstractKeys {
 		public static org.jooq.Identity<com.instalogger.entities.generated.tables.records.MessageRecord, java.lang.Integer> IDENTITY_MESSAGE = createIdentity(com.instalogger.entities.generated.tables.Message.MESSAGE, com.instalogger.entities.generated.tables.Message.MESSAGE.ID);
+		public static org.jooq.Identity<com.instalogger.entities.generated.tables.records.RepeatedMessageRecord, java.lang.Integer> IDENTITY_REPEATED_MESSAGE = createIdentity(com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE, com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE.ID);
 		public static org.jooq.Identity<com.instalogger.entities.generated.tables.records.ServerRecord, java.lang.Integer> IDENTITY_SERVER = createIdentity(com.instalogger.entities.generated.tables.Server.SERVER, com.instalogger.entities.generated.tables.Server.SERVER.ID);
 	}
 
 	private static class UniqueKeys0 extends org.jooq.impl.AbstractKeys {
 		public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.MessageRecord> MESSAGE_PKEY = createUniqueKey(com.instalogger.entities.generated.tables.Message.MESSAGE, com.instalogger.entities.generated.tables.Message.MESSAGE.ID);
+		public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.RepeatedMessageRecord> REPEATED_MESSAGE_PKEY = createUniqueKey(com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE, com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE.ID);
 		public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.ServerRecord> SERVER_PKEY = createUniqueKey(com.instalogger.entities.generated.tables.Server.SERVER, com.instalogger.entities.generated.tables.Server.SERVER.ID);
 		public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.SettingRecord> SETTING_PKEY = createUniqueKey(com.instalogger.entities.generated.tables.Setting.SETTING, com.instalogger.entities.generated.tables.Setting.SETTING.ID);
 		public static final org.jooq.UniqueKey<com.instalogger.entities.generated.tables.records.SystemRecord> SYSTEM_PKEY = createUniqueKey(com.instalogger.entities.generated.tables.System.SYSTEM, com.instalogger.entities.generated.tables.System.SYSTEM.ID);
@@ -54,5 +59,6 @@ public class Keys {
 
 	private static class ForeignKeys0 extends org.jooq.impl.AbstractKeys {
 		public static final org.jooq.ForeignKey<com.instalogger.entities.generated.tables.records.MessageRecord, com.instalogger.entities.generated.tables.records.ServerRecord> MESSAGE__MESSAGE_SERVER = createForeignKey(com.instalogger.entities.generated.Keys.SERVER_PKEY, com.instalogger.entities.generated.tables.Message.MESSAGE, com.instalogger.entities.generated.tables.Message.MESSAGE.SERVER_ID);
+		public static final org.jooq.ForeignKey<com.instalogger.entities.generated.tables.records.RepeatedMessageRecord, com.instalogger.entities.generated.tables.records.ServerRecord> REPEATED_MESSAGE__REPEATED_MESSAGE_SERVER = createForeignKey(com.instalogger.entities.generated.Keys.SERVER_PKEY, com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE, com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE.SERVER_ID);
 	}
 }

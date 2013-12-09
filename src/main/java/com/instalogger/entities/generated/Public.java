@@ -11,7 +11,7 @@ package com.instalogger.entities.generated;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Public extends org.jooq.impl.SchemaImpl {
 
-	private static final long serialVersionUID = 76598666;
+	private static final long serialVersionUID = 278267481;
 
 	/**
 	 * The singleton instance of <code>public</code>
@@ -35,6 +35,7 @@ public class Public extends org.jooq.impl.SchemaImpl {
 	private final java.util.List<org.jooq.Sequence<?>> getSequences0() {
 		return java.util.Arrays.<org.jooq.Sequence<?>>asList(
 			com.instalogger.entities.generated.Sequences.MESSAGE_ID_SEQ,
+			com.instalogger.entities.generated.Sequences.REPEATED_MESSAGE_ID_SEQ,
 			com.instalogger.entities.generated.Sequences.SERVER_ID_SEQ);
 	}
 
@@ -48,6 +49,7 @@ public class Public extends org.jooq.impl.SchemaImpl {
 	private final java.util.List<org.jooq.Table<?>> getTables0() {
 		return java.util.Arrays.<org.jooq.Table<?>>asList(
 			com.instalogger.entities.generated.tables.Message.MESSAGE,
+			com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE,
 			com.instalogger.entities.generated.tables.Server.SERVER,
 			com.instalogger.entities.generated.tables.Setting.SETTING,
 			com.instalogger.entities.generated.tables.System.SYSTEM);

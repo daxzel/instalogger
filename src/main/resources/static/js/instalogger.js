@@ -68,6 +68,7 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
     var onSendMessageListeners = [];
     var onRefreshListeners = [];
     var onLazyMessagesDownloadListeners = [];
+    var addRepeatedMessageListeners = [];
     var onServerPingListeners = [];
 
 
@@ -92,6 +93,11 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
                     onLazyMessagesDownloadListeners[i](data);
                 }
                 break;
+            case 'addRepeatedMessage':
+                for (var i = 0; i < addRepeatedMessageListeners.length; i++) {
+                    addRepeatedMessageListeners[i](data);
+                }
+                break;
             case 'serverPing':
                 for (var i = 0; i < onServerPingListeners.length; i++) {
                     onServerPingListeners[i](data.serverId);
@@ -111,6 +117,9 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
         },
         onLazyMessagesDownload: function (callback) {
             onLazyMessagesDownloadListeners.push(callback);
+        },
+        onAddRepeatedMessage: function (callback) {
+            addRepeatedMessageListeners.push(callback);
         },
         onServerPing: function (callback) {
             onServerPingListeners.push(callback);
@@ -150,6 +159,32 @@ instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEv
 }]);
 
 
+instaloggerApp.factory('repeatedMessages', ['socket', 'serverEvents', function (socket, serverEvents) {
+
+    var repeatedMessages = {
+        values: {},
+        add: function(message) {
+            var info = {};
+            info.messageId = message.id;
+            info.name = ' aaa ';
+            info.command = 'addRepeatedMessage';
+            socket.send(JSON.stringify(info));
+        }
+    }
+    serverEvents.onAddRepeatedMessage(function (data) {
+        var repeatedMessage = data.value;
+        if (repeatedMessages.values[repeatedMessage.id] != undefined) {
+            repeatedMessages.values[repeatedMessage.id].count = repeatedMessage.count
+        } else {
+            repeatedMessages.values[repeatedMessage.id] = repeatedMessage
+        }
+    })
+
+    return repeatedMessages;
+}]);
+
+
+
 instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unreadErrorMessages', 'serverEvents',
     function ($rootScope, socket, $http, unreadErrorMessages, serverEvents) {
 
@@ -181,6 +216,11 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
             for (var id in servers.values) {
                 servers.values[id].messages = []
             }
+        }
+
+        servers.removeMessage = function (message) {
+            var server = getServer($http, servers, message)
+            delete server[message.id]
         }
 
         servers.refreshClear = function () {
@@ -249,10 +289,18 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
 
 instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource', 'messageServers', 'socket',
-    'unreadErrorMessages', '$modal', function ($scope, $http, $sce, $resource, messageServers, socket, unreadErrorMessages, $modal) {
+    'unreadErrorMessages', '$modal', 'repeatedMessages',
+    function ($scope, $http, $sce, $resource, messageServers, socket, unreadErrorMessages, $modal, repeatedMessages) {
         $scope.servers = messageServers.values;
 
         $scope.unreadErrorMessages = unreadErrorMessages;
+
+        $scope.repeatedMessages = repeatedMessages.values;
+
+        $scope.addRepeatedMessage = function (message) {
+            messageServers.removeMessage(message);
+            repeatedMessages.add(message);
+        }
 
         $scope.logLevels = {
             10000: {

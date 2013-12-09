@@ -11,7 +11,7 @@ package com.instalogger.entities.generated.tables.records;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ServerRecord extends org.jooq.impl.UpdatableRecordImpl<com.instalogger.entities.generated.tables.records.ServerRecord> implements org.jooq.Record2<java.lang.Integer, java.lang.String> {
 
-	private static final long serialVersionUID = -1179982494;
+	private static final long serialVersionUID = 1466471592;
 
 	/**
 	 * Setter for <code>public.server.id</code>. 

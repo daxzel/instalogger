@@ -11,7 +11,7 @@ package com.instalogger.entities.generated.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class System extends org.jooq.impl.TableImpl<com.instalogger.entities.generated.tables.records.SystemRecord> {
 
-	private static final long serialVersionUID = -238499365;
+	private static final long serialVersionUID = -88504137;
 
 	/**
 	 * The singleton instance of <code>public.system</code>

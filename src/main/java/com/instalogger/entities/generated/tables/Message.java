@@ -11,7 +11,7 @@ package com.instalogger.entities.generated.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Message extends org.jooq.impl.TableImpl<com.instalogger.entities.generated.tables.records.MessageRecord> {
 
-	private static final long serialVersionUID = -98435652;
+	private static final long serialVersionUID = -1172381350;
 
 	/**
 	 * The singleton instance of <code>public.message</code>
@@ -50,6 +50,16 @@ public class Message extends org.jooq.impl.TableImpl<com.instalogger.entities.ge
 	 * The column <code>public.message.server_id</code>. 
 	 */
 	public final org.jooq.TableField<com.instalogger.entities.generated.tables.records.MessageRecord, java.lang.Integer> SERVER_ID = createField("server_id", org.jooq.impl.SQLDataType.INTEGER, this);
+
+	/**
+	 * The column <code>public.message.text_tsvector</code>. 
+	 */
+	public final org.jooq.TableField<com.instalogger.entities.generated.tables.records.MessageRecord, java.lang.Object> TEXT_TSVECTOR = createField("text_tsvector", org.jooq.impl.DefaultDataType.getDefaultDataType("tsvector"), this);
+
+	/**
+	 * The column <code>public.message.hash</code>. 
+	 */
+	public final org.jooq.TableField<com.instalogger.entities.generated.tables.records.MessageRecord, java.lang.Integer> HASH = createField("hash", org.jooq.impl.SQLDataType.INTEGER, this);
 
 	/**
 	 * Create a <code>public.message</code> table reference

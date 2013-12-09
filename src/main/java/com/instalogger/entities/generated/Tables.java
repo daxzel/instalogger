@@ -19,6 +19,11 @@ public class Tables {
 	public static final com.instalogger.entities.generated.tables.Message MESSAGE = com.instalogger.entities.generated.tables.Message.MESSAGE;
 
 	/**
+	 * The table public.repeated_message
+	 */
+	public static final com.instalogger.entities.generated.tables.RepeatedMessage REPEATED_MESSAGE = com.instalogger.entities.generated.tables.RepeatedMessage.REPEATED_MESSAGE;
+
+	/**
 	 * The table public.server
 	 */
 	public static final com.instalogger.entities.generated.tables.Server SERVER = com.instalogger.entities.generated.tables.Server.SERVER;

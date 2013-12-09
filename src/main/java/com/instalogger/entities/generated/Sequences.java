@@ -19,6 +19,11 @@ public class Sequences {
 	public static final org.jooq.Sequence<java.lang.Long> MESSAGE_ID_SEQ = new org.jooq.impl.SequenceImpl<java.lang.Long>("message_id_seq", com.instalogger.entities.generated.Public.PUBLIC, org.jooq.impl.SQLDataType.BIGINT.nullable(false));
 
 	/**
+	 * The sequence <code>public.repeated_message_id_seq</code>
+	 */
+	public static final org.jooq.Sequence<java.lang.Long> REPEATED_MESSAGE_ID_SEQ = new org.jooq.impl.SequenceImpl<java.lang.Long>("repeated_message_id_seq", com.instalogger.entities.generated.Public.PUBLIC, org.jooq.impl.SQLDataType.BIGINT.nullable(false));
+
+	/**
 	 * The sequence <code>public.server_id_seq</code>
 	 */
 	public static final org.jooq.Sequence<java.lang.Long> SERVER_ID_SEQ = new org.jooq.impl.SequenceImpl<java.lang.Long>("server_id_seq", com.instalogger.entities.generated.Public.PUBLIC, org.jooq.impl.SQLDataType.BIGINT.nullable(false));
