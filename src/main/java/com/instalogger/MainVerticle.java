@@ -302,6 +302,36 @@ public class MainVerticle extends Verticle {
         });
 
 
+        eventBus.registerHandler("refreshRepeatedMessage", new Handler<Message<JsonObject>>() {
+            @Override
+            public void handle(Message<JsonObject> message) {
+                JsonObject request = message.body();
+                String sockJSId = request.getString("sockJs");
+                SockInfo sockInfo = (SockInfo) vertx.sharedData().getMap("sockSockets").get(sockJSId);
+
+                Result<RepeatedMessageRecord> repeatedMessageRecords =
+                        dslContext.selectFrom(REPEATED_MESSAGE).fetch();
+                JsonObject result = new JsonObject();
+                result.putString("command", "refreshRepeatedMessage");
+                result.putObject("value", JsonHelper.getResultAsJsonObject(repeatedMessageRecords, "id"));
+
+                final SockJSSocket sock = sockInfo.getSocket();
+
+                if (!sock.writeQueueFull()) {
+                    sock.write(new Buffer(result.toString()));
+                } else {
+                    sock.pause();
+                    sock.drainHandler(new VoidHandler() {
+                        public void handle() {
+                            sock.resume();
+                        }
+                    });
+                }
+
+            }
+        });
+
+
         sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
 
 
@@ -387,6 +417,11 @@ public class MainVerticle extends Verticle {
                                 setRepeatedMessageRequest.putString("name", json.getString("name"));
                                 setRepeatedMessageRequest.putNumber("messageId", json.getNumber("messageId"));
                                 eventBus.send("addRepeatedMessage", setRepeatedMessageRequest);
+                                break;
+                            case "refreshRepeatedMessage":
+                                JsonObject refreshRepeatedMessageRequest = new JsonObject();
+                                refreshRepeatedMessageRequest.putString("sockJs", sock.writeHandlerID());
+                                eventBus.send("refreshRepeatedMessage", refreshRepeatedMessageRequest);
                                 break;
                         }
                     }

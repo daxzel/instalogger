@@ -68,6 +68,7 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
     var onSendMessageListeners = [];
     var onRefreshListeners = [];
     var onLazyMessagesDownloadListeners = [];
+    var refreshRepeatedMessageListeners = [];
     var addRepeatedMessageListeners = [];
     var onServerPingListeners = [];
 
@@ -103,6 +104,11 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
                     onServerPingListeners[i](data.serverId);
                 }
                 break;
+            case 'refreshRepeatedMessage':
+                for (var i = 0; i < onServerPingListeners.length; i++) {
+                    refreshRepeatedMessageListeners[i](data);
+                }
+                break;
 
         }
     });
@@ -120,6 +126,9 @@ instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootS
         },
         onAddRepeatedMessage: function (callback) {
             addRepeatedMessageListeners.push(callback);
+        },
+        onRefreshRepeatedMessage: function (callback) {
+            refreshRepeatedMessageListeners.push(callback);
         },
         onServerPing: function (callback) {
             onServerPingListeners.push(callback);
@@ -163,14 +172,27 @@ instaloggerApp.factory('repeatedMessages', ['socket', 'serverEvents', function (
 
     var repeatedMessages = {
         values: {},
-        add: function(message) {
+        add: function(message, name) {
             var info = {};
             info.messageId = message.id;
-            info.name = ' aaa ';
+            info.name = name;
             info.command = 'addRepeatedMessage';
             socket.send(JSON.stringify(info));
         }
     }
+
+    socket.onopen(function(){
+        var info = {};
+        info.command = 'refreshRepeatedMessage';
+        socket.send(JSON.stringify(info));
+    });
+
+    serverEvents.onRefreshRepeatedMessage(function (data) {
+        angular.forEach(data.value, function(item) {
+            repeatedMessages.values[item.id] = item;
+        });
+    })
+
     serverEvents.onAddRepeatedMessage(function (data) {
         var repeatedMessage = data.value;
         if (repeatedMessages.values[repeatedMessage.id] != undefined) {
@@ -288,6 +310,19 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
     }]);
 
 
+
+instaloggerApp.controller('dialogController', function($scope, $modalInstance) {
+    $scope.ok = function (name) {
+        $modalInstance.close(name);
+    };
+
+
+    $scope.cancel = function () {
+        $modalInstance.dismiss('cancel');
+    };
+
+})
+
 instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource', 'messageServers', 'socket',
     'unreadErrorMessages', '$modal', 'repeatedMessages',
     function ($scope, $http, $sce, $resource, messageServers, socket, unreadErrorMessages, $modal, repeatedMessages) {
@@ -298,8 +333,17 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
         $scope.repeatedMessages = repeatedMessages.values;
 
         $scope.addRepeatedMessage = function (message) {
-            messageServers.removeMessage(message);
-            repeatedMessages.add(message);
+            var modalInstance = $modal.open({
+                templateUrl: 'nameDialog.html',
+                controller: 'dialogController'
+            });
+            modalInstance.result.then(function (name) {
+                messageServers.removeMessage(message);
+                repeatedMessages.add(message, name);
+            });
+
+//            messageServers.removeMessage(message);
+//            repeatedMessages.add(message);
         }
 
         $scope.logLevels = {
@@ -336,7 +380,8 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
         socket.onclose(function () {
             $modal.open({
                 templateUrl: 'connectionLost.html',
-                backdrop: 'static'
+                backdrop: 'static',
+                controller: ''
             });
         });
 
@@ -492,7 +537,6 @@ instaloggerApp.directive('serverPing', ['serverEvents', function (serverEvents) 
         }
     }
 }]);
-
 
 function parseExceptionString(s) {
     try {
