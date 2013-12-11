@@ -19,120 +19,60 @@ function isError(message) {
 
 instaloggerApp.factory('socket', function ($rootScope) {
     var sock = new SockJS("/eventbus");
-    var onopenListeners = [];
     sock.onopen = function () {
         $rootScope.$apply(function () {
-            for (var i = 0; i < onopenListeners.length; i++) {
-                onopenListeners[i]();
-            }
+            $rootScope.$broadcast('socketOnOpen')
         });
     };
-    var onmessageListeners = [];
+
     sock.onmessage = function (data) {
         $rootScope.$apply(function () {
-            for (var i = 0; i < onmessageListeners.length; i++) {
-                onmessageListeners[i](data);
-            }
+            $rootScope.$broadcast('socketOnMessage', data)
         });
     }
-    var oncloseListeners = [];
     sock.onclose = function () {
         $rootScope.$apply(function () {
-            for (var i = 0; i < oncloseListeners.length; i++) {
-                oncloseListeners[i]();
-            }
+            $rootScope.$apply(function () {
+                $rootScope.$broadcast('socketOnClose', data)
+            });
         });
     }
 
-
     return {
-        onopen: function (callback) {
-            onopenListeners.push(callback);
-        },
-        onmessage: function (callback) {
-            onmessageListeners.push(callback);
-
-        },
         send: function (data) {
             sock.send(data);
-        },
-        onclose: function (callback) {
-            oncloseListeners.push(callback);
         }
     };
 });
 
-instaloggerApp.factory('serverEvents', ['$rootScope', 'socket', function ($rootScope, socket) {
+instaloggerApp.factory('serverEvents', ['$rootScope', function ($rootScope) {
 
-    var onSendMessageListeners = [];
-    var onRefreshListeners = [];
-    var onLazyMessagesDownloadListeners = [];
-    var refreshRepeatedMessageListeners = [];
-    var addRepeatedMessageListeners = [];
-    var onServerPingListeners = [];
-
-
-    socket.onmessage(function (response) {
+    $rootScope.$on('socketOnMessage', function (event, response) {
         var data = jQuery.parseJSON(response.data);
         switch (data.command) {
             case 'sendMessage':
-                for (var i = 0; i < onSendMessageListeners.length; i++) {
-                    onSendMessageListeners[i](data);
-                }
-                for (var i = 0; i < onServerPingListeners.length; i++) {
-                    onServerPingListeners[i](data.value.server_id);
-                }
+                $rootScope.$broadcast("sendMessage", data)
+                $rootScope.$broadcast("serverPing", data.value.server_id)
                 break;
             case 'refresh':
-                for (var i = 0; i < onRefreshListeners.length; i++) {
-                    onRefreshListeners[i](data);
-                }
+                $rootScope.$broadcast("refresh", data)
                 break;
             case 'lazyMessagesDownload':
-                for (var i = 0; i < onLazyMessagesDownloadListeners.length; i++) {
-                    onLazyMessagesDownloadListeners[i](data);
-                }
+                $rootScope.$broadcast("lazyMessagesDownload", data)
                 break;
             case 'addRepeatedMessage':
-                for (var i = 0; i < addRepeatedMessageListeners.length; i++) {
-                    addRepeatedMessageListeners[i](data);
-                }
+                $rootScope.$broadcast("addRepeatedMessage", data)
                 break;
             case 'serverPing':
-                for (var i = 0; i < onServerPingListeners.length; i++) {
-                    onServerPingListeners[i](data.serverId);
-                }
+                $rootScope.$broadcast("serverPing", data.serverId)
                 break;
             case 'refreshRepeatedMessage':
-                for (var i = 0; i < onServerPingListeners.length; i++) {
-                    refreshRepeatedMessageListeners[i](data);
-                }
+                $rootScope.$broadcast("refreshRepeatedMessage", data)
                 break;
 
         }
     });
-    return {
-        onSendMessage: function (callback) {
-            onSendMessageListeners.push(callback);
-
-        },
-        onRefresh: function (callback) {
-            onRefreshListeners.push(callback);
-
-        },
-        onLazyMessagesDownload: function (callback) {
-            onLazyMessagesDownloadListeners.push(callback);
-        },
-        onAddRepeatedMessage: function (callback) {
-            addRepeatedMessageListeners.push(callback);
-        },
-        onRefreshRepeatedMessage: function (callback) {
-            refreshRepeatedMessageListeners.push(callback);
-        },
-        onServerPing: function (callback) {
-            onServerPingListeners.push(callback);
-        }
-    };
+    return { };
 
 }]);
 
@@ -156,7 +96,7 @@ instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEv
         }
     }
 
-    serverEvents.onSendMessage(function (data) {
+    $rootScope.$on("sendMessage",function (event, data) {
         var message = data.value;
         if (isError(message)) {
             unreadErrorMessages.add(message);
@@ -167,7 +107,8 @@ instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEv
 }]);
 
 
-instaloggerApp.factory('repeatedMessages', ['socket', 'serverEvents', function (socket, serverEvents) {
+instaloggerApp.factory('repeatedMessages', ['socket', 'serverEvents', '$rootScope',
+    function (socket, serverEvents, $rootScope) {
 
     var repeatedMessages = {
         values: {},
@@ -187,19 +128,21 @@ instaloggerApp.factory('repeatedMessages', ['socket', 'serverEvents', function (
         }
     }
 
-    socket.onopen(function(){
+    $rootScope.$on('socketOnOpen', function () {
         var info = {};
         info.command = 'refreshRepeatedMessage';
         socket.send(JSON.stringify(info));
+
     });
 
-    serverEvents.onRefreshRepeatedMessage(function (data) {
+
+    $rootScope.$on("refreshRepeatedMessage", function (event, data) {
         angular.forEach(data.value, function(item) {
             repeatedMessages.values[item.id] = item;
         });
     })
 
-    serverEvents.onAddRepeatedMessage(function (data) {
+    $rootScope.$on("addRepeatedMessage", function (event, data) {
         var repeatedMessage = data.value;
         if (repeatedMessages.values[repeatedMessage.id] != undefined) {
             repeatedMessages.values[repeatedMessage.id].count = repeatedMessage.count
@@ -268,7 +211,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
             }
         }
 
-        serverEvents.onSendMessage(function (data) {
+        $rootScope.$on("sendMessage", function (event, data) {
             var message = data.value;
             var server = getServer($http, servers, message)
             if (!server.refresh) {
@@ -279,7 +222,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
             }
         })
 
-        serverEvents.onRefresh(function (data) {
+        $rootScope.$on("Refresh", function (event, data) {
             var value = data.value;
             var server = servers.values[value.serverId]
             server.messages = value.messages
@@ -287,7 +230,7 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
             server.down = value.messages.length < 100
         })
 
-        serverEvents.onLazyMessagesDownload(function (data) {
+        $rootScope.$on("lazyMessagesDownload", function (event, data) {
             var value = data.value;
             var server = servers.values[value.serverId]
             server.messages = server.messages.concat(value.messages)
@@ -389,7 +332,7 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             }
         }
 
-        socket.onclose(function () {
+        $scope.$on('socketOnClose', function () {
             $modal.open({
                 templateUrl: 'connectionLost.html',
                 backdrop: 'static',
@@ -526,7 +469,7 @@ instaloggerApp.directive('serverPing', ['serverEvents', function (serverEvents) 
                 work: false,
                 tick: 0
             }
-            serverEvents.onServerPing(function (serverId) {
+            scope.$on("serverPing", function (event, serverId) {
                 if (scope.server.id == serverId) {
                     if (timer.work) {
                         timer.getPing = true
