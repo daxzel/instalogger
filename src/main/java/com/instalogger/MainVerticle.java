@@ -25,8 +25,6 @@ import org.vertx.java.core.sockjs.SockJSServer;
 import org.vertx.java.core.sockjs.SockJSSocket;
 import org.vertx.java.platform.Verticle;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -138,48 +136,73 @@ public class MainVerticle extends Verticle {
         });
 
 
+        eventBus.registerHandler("postMessage", new Handler<Message<JsonObject>>() {
+            @Override
+            public void handle(Message<JsonObject> event) {
+                JsonObject request = event.body();
+                String serverName = request.getString("serverName");
+                Integer logLevel = request.getInteger("logLevel");
+                String text = request.getString("text");
+                Integer serverId;
+                if (serverName == null) {
+                    serverName = "default";
+                }
+                Result<Record> servers = dslContext.select()
+                        .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
+                if (servers.isEmpty()) {
+                    ServerRecord serverRecord = dslContext.insertInto(SERVER, SERVER.NAME)
+                            .values(serverName)
+                            .returning(SERVER.ID)
+                            .fetchOne();
+                    serverId = serverRecord.getId();
+                } else {
+                    serverId = servers.get(0).getValue(SERVER.ID);
+                }
+
+                int hash = text.hashCode();
+                RepeatedMessageRecord repeatedMessageRecord = dslContext.selectFrom(REPEATED_MESSAGE)
+                        .where(REPEATED_MESSAGE.HASH.equal(hash)).fetchAny();
+
+                if (repeatedMessageRecord == null) {
+                    MessageRecord message = dslContext
+                            .insertInto(MESSAGE, MESSAGE.TEXT, MESSAGE.LOG_LEVEL, MESSAGE.SERVER_ID, MESSAGE.HASH)
+                            .values(text, logLevel, serverId, hash).returning(MESSAGE.ID).fetchOne();
+                    JsonObject jsonMessage = new JsonObject();
+                    jsonMessage.putString("text", text);
+                    jsonMessage.putNumber("log_level", logLevel);
+                    jsonMessage.putString("create_time", formatter.format(new Date()));
+                    jsonMessage.putNumber("server_id", serverId);
+                    jsonMessage.putNumber("hash", hash);
+                    jsonMessage.putNumber("id", message.getId());
+
+                    eventBus.publish("messageAdded", jsonMessage);
+                } else {
+                    repeatedMessageRecord.setCount(repeatedMessageRecord.getCount() + 1);
+                    repeatedMessageRecord.update();
+                    eventBus.publish("repeatedMessagePing", JsonHelper.formatJsonObject(repeatedMessageRecord));
+                }
+            }
+        });
+
         routeMatcher.post("/message", new Handler<HttpServerRequest>() {
             @Override
             public void handle(final HttpServerRequest event) {
                 event.bodyHandler(new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer bufferEvent) {
+                        JsonObject request = new JsonObject();
 
                         String serverName = event.params().get("serverName");
-                        Integer serverId;
-                        if (serverName == null) {
-                            serverName = "default";
-                        }
-                        Result<Record> servers = dslContext.select()
-                                .from(SERVER).where(SERVER.NAME.equal(serverName)).fetch();
-                        if (servers.isEmpty()) {
-                            ServerRecord serverRecord = dslContext.insertInto(SERVER, SERVER.NAME)
-                                    .values(serverName)
-                                    .returning(SERVER.ID)
-                                    .fetchOne();
-                            serverId = serverRecord.getId();
-                        } else {
-                            serverId = servers.get(0).getValue(SERVER.ID);
-                        }
-
                         Integer logLevel = Integer.valueOf(event.params().get("logLevel"));
                         short length = bufferEvent.getShort(0);
                         String text = bufferEvent.getString(2, length);
-                        int hash = text.hashCode();
 
-                        MessageRecord message = dslContext
-                                .insertInto(MESSAGE, MESSAGE.TEXT, MESSAGE.LOG_LEVEL, MESSAGE.SERVER_ID, MESSAGE.HASH)
-                                .values(text, logLevel, serverId, hash).returning(MESSAGE.ID).fetchOne();
+                        request.putString("serverName", serverName);
+                        request.putNumber("logLevel", logLevel);
+                        request.putString("text", text);
 
-                        JsonObject jsonMessage = new JsonObject();
-                        jsonMessage.putString("text", text);
-                        jsonMessage.putNumber("log_level", logLevel);
-                        jsonMessage.putString("create_time", formatter.format(new Date()));
-                        jsonMessage.putNumber("server_id", serverId);
-                        jsonMessage.putNumber("hash", hash);
-                        jsonMessage.putNumber("id", message.getId());
+                        eventBus.publish("postMessage", request);
 
-                        eventBus.publish("messageAdded", jsonMessage);
                         event.response().setChunked(true);
                         event.response().write("ok");
                         event.response().end();
@@ -279,7 +302,7 @@ public class MainVerticle extends Verticle {
                 messageRecord.delete();
 
                 RepeatedMessageRecord repeatedMessageRecord = dslContext.selectFrom(REPEATED_MESSAGE)
-                                .where(REPEATED_MESSAGE.ID.equal(repeatedMessageRecordId.getId())).fetchOne();
+                        .where(REPEATED_MESSAGE.ID.equal(repeatedMessageRecordId.getId())).fetchOne();
 
                 JsonObject result = new JsonObject();
                 result.putString("command", "addRepeatedMessage");
@@ -309,6 +332,7 @@ public class MainVerticle extends Verticle {
                 String sockJSId = request.getString("sockJs");
                 SockInfo sockInfo = (SockInfo) vertx.sharedData().getMap("sockSockets").get(sockJSId);
 
+
                 Result<RepeatedMessageRecord> repeatedMessageRecords =
                         dslContext.selectFrom(REPEATED_MESSAGE).fetch();
                 JsonObject result = new JsonObject();
@@ -331,6 +355,15 @@ public class MainVerticle extends Verticle {
             }
         });
 
+        eventBus.registerHandler("removeRepeatedMessage", new Handler<Message<JsonObject>>() {
+            @Override
+            public void handle(Message<JsonObject> message) {
+                JsonObject request = message.body();
+                Integer repeatedMessageId = request.getNumber("repeatedMessageId").intValue();
+                dslContext.delete(REPEATED_MESSAGE).where(REPEATED_MESSAGE.ID.equal(repeatedMessageId)).execute();
+            }
+        });
+
 
         sockJSServer.installApp(new JsonObject().putString("prefix", "/eventbus"), new Handler<SockJSSocket>() {
 
@@ -344,27 +377,39 @@ public class MainVerticle extends Verticle {
 
                 vertx.sharedData().getMap("sockSockets").put(sock.writeHandlerID(), socketInfo);
 
+                eventBus.registerHandler("repeatedMessagePing", new Handler<Message>() {
+                    @Override
+                    public void handle(Message message) {
+                        JsonObject jsonMessage = (JsonObject) message.body();
+                        JsonObject result = new JsonObject();
+                        result.putString("command", "addRepeatedMessage");
+                        result.putObject("value", jsonMessage);
+
+                        if (!sock.writeQueueFull()) {
+                            sock.write(new Buffer(result.toString()));
+                        } else {
+                            sock.pause();
+                            sock.drainHandler(new VoidHandler() {
+                                public void handle() {
+                                    sock.resume();
+                                }
+                            });
+                        }
+                    }
+                });
+
                 eventBus.registerHandler("messageAdded", new Handler<Message>() {
                     @Override
                     public void handle(Message message) {
                         JsonObject jsonMessage = (JsonObject) message.body();
                         JsonObject result = new JsonObject();
 
-                        RepeatedMessageRecord record = dslContext.selectFrom(REPEATED_MESSAGE)
-                                .where(REPEATED_MESSAGE.HASH.equal(jsonMessage.getInteger("hash"))).fetchAny();
-                        if (record != null) {
-                            record.setCount(record.getCount() + 1);
-                            record.update();
-                            result.putString("command", "addRepeatedMessage");
-                            result.putObject("value", new JsonObject(JsonHelper.formatJSON(record)));
+                        if (settings.needShow(jsonMessage.getInteger("log_level"))) {
+                            result.putString("command", "sendMessage");
+                            result.putObject("value", jsonMessage);
                         } else {
-                            if (settings.needShow(jsonMessage.getInteger("log_level"))) {
-                                result.putString("command", "sendMessage");
-                                result.putObject("value", jsonMessage);
-                            } else {
-                                result.putString("command", "serverPing");
-                                result.putNumber("serverId", jsonMessage.getNumber("server_id"));
-                            }
+                            result.putString("command", "serverPing");
+                            result.putNumber("serverId", jsonMessage.getNumber("server_id"));
                         }
 
                         if (!sock.writeQueueFull()) {
@@ -422,6 +467,13 @@ public class MainVerticle extends Verticle {
                                 JsonObject refreshRepeatedMessageRequest = new JsonObject();
                                 refreshRepeatedMessageRequest.putString("sockJs", sock.writeHandlerID());
                                 eventBus.send("refreshRepeatedMessage", refreshRepeatedMessageRequest);
+                                break;
+                            case "removeRepeatedMessage":
+                                JsonObject refreshRemoveRepeatedMessageRequest = new JsonObject();
+                                refreshRemoveRepeatedMessageRequest.putString("sockJs", sock.writeHandlerID());
+                                refreshRemoveRepeatedMessageRequest.putNumber("repeatedMessageId",
+                                        json.getNumber("repeatedMessageId"));
+                                eventBus.send("removeRepeatedMessage", refreshRemoveRepeatedMessageRequest);
                                 break;
                         }
                     }

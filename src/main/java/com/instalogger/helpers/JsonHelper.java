@@ -70,4 +70,18 @@ public class JsonHelper {
 
         return JSONValue.toJSONString(jRecord);
     }
+
+    public static JsonObject formatJsonObject(Record record) {
+
+        Map<String, Object> jRecord = new HashMap<>();
+        for (Field<?> field : record.fields()) {
+            Object value = record.getValue(field);
+            if (value instanceof Date) {
+                value = formatter.format(value);
+            }
+            jRecord.put(field.getName(), value);
+        }
+
+        return new JsonObject(jRecord);
+    }
 }

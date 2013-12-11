@@ -86,15 +86,20 @@
                         <span class="glyphicon glyphicon-trash"></span>
                     </button>
 
-                    <span class="label label-danger instalogger-repeated-message"
-                          ng-repeat="repeatedMessage in repeatedMessages">
-                        <span class="badge">{{repeatedMessage.count}}</span>{{repeatedMessage.name}}
-                        <!--<button type="button" class="btn btn-default btn-xs">-->
-                            <i class="fa fa-times"></i>
-                            <!--<span class="glyphicon glyphicon-trash"></span>-->
-                        <!--</button>-->
-                    </span>
-
+                    <div class="btn-group btn-group-xs instalogger-repeated-message"
+                         ng-repeat="repeatedMessage in repeatedMessages">
+                        <button type="button" class="btn btn-default
+                            btn-xs instalogger-unclickable-button instalogger-repeated-message-count">
+                            {{repeatedMessage.count}}
+                        </button>
+                        <button type="button" class="btn btn-default btn-xs instalogger-unclickable-button">
+                            {{repeatedMessage.name}}
+                        </button>
+                        <button type="button" class="btn btn-default btn-xs"
+                                ng-click="removeRepeatedMessage(repeatedMessage)">
+                            <i  class="fa fa-times"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="panel-body instalogger-message-panel-body" instalogger-scroll="messageScroll(server)">
                     <div id="{{ 'outer-' + server.id }}" style="overflow-y:hidden;">

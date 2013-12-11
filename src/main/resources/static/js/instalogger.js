@@ -48,7 +48,6 @@ instaloggerApp.factory('socket', function ($rootScope) {
     return {
         onopen: function (callback) {
             onopenListeners.push(callback);
-
         },
         onmessage: function (callback) {
             onmessageListeners.push(callback);
@@ -178,6 +177,13 @@ instaloggerApp.factory('repeatedMessages', ['socket', 'serverEvents', function (
             info.name = name;
             info.command = 'addRepeatedMessage';
             socket.send(JSON.stringify(info));
+        },
+        remove: function(repeatedMessage) {
+            var info = {};
+            info.repeatedMessageId = repeatedMessage.id;
+            info.command = 'removeRepeatedMessage';
+            socket.send(JSON.stringify(info));
+            delete this.values[repeatedMessage.id]
         }
     }
 
@@ -242,7 +248,16 @@ instaloggerApp.factory('messageServers', ['$rootScope', 'socket', '$http', 'unre
 
         servers.removeMessage = function (message) {
             var server = getServer($http, servers, message)
-            delete server[message.id]
+            var index;
+            for(var i=0; i<server.messages.length; i++) {
+                if (server.messages[i].id == message.id) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index != undefined) {
+                server.messages.splice(index, 1);
+            }
         }
 
         servers.refreshClear = function () {
@@ -341,9 +356,6 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
                 messageServers.removeMessage(message);
                 repeatedMessages.add(message, name);
             });
-
-//            messageServers.removeMessage(message);
-//            repeatedMessages.add(message);
         }
 
         $scope.logLevels = {
@@ -388,6 +400,10 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
 
         $scope.isError = function (message) {
             return isError(message);
+        }
+
+        $scope.removeRepeatedMessage = function (repeatedMessage) {
+            repeatedMessages.remove(repeatedMessage);
         }
 
         $scope.searchTextChanged = function (text) {
