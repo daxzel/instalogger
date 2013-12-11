@@ -2,12 +2,12 @@
 
 angular.module('ngClipboard', [])
     .value('ZeroClipboardPath', '/static/flash/ZeroClipboard.swf')
-    .factory('zeroClipboard', ['ZeroClipboardPath', function (ZeroClipboardPath) {
+    .factory('zeroClipboard', ['ZeroClipboardPath', '$rootScope', function (ZeroClipboardPath, $rootScope) {
         ZeroClipboard.setDefaults({ moviePath: ZeroClipboardPath });
         var clip = new ZeroClipboard();
 
         clip.on('mousedown', function (client) {
-            this.clipCopyFunction(client);
+            $rootScope.$broadcast('clipMouseDown', client, this)
         });
 
         return clip;
@@ -21,13 +21,14 @@ angular.module('ngClipboard', [])
             restrict: 'A',
             link: function (scope, element, attrs) {
                 zeroClipboard.glue(element);
-
-                element[0].clipCopyFunction = function (client) {
-                    client.setText(scope.$eval(scope.clipCopy));
-                    if (angular.isDefined(attrs.clipClick)) {
-                        scope.$apply(scope.clipClick);
+                scope.$on('clipMouseDown', function (event, client, mouseDownElement) {
+                    if (element[0] == mouseDownElement) {
+                        client.setText(scope.$eval(scope.clipCopy));
+                        if (angular.isDefined(attrs.clipClick)) {
+                            scope.$apply(scope.clipClick);
+                        }
                     }
-                }
+                })
             }
         }
     }]);
