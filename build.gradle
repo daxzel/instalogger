@@ -55,8 +55,11 @@ buildscript {
         classpath "io.vertx:vertx-platform:$vertxVersion"
         classpath "io.vertx:vertx-hazelcast:$vertxVersion"
         classpath files(['src/main/resources'])
+        classpath 'com.eriwen:gradle-js-plugin:1.9.0'
     }
 }
+
+apply plugin: 'js'
 
 sourceSets {
     main {
@@ -64,10 +67,45 @@ sourceSets {
     }
 }
 
-task copyMod( type:Copy, dependsOn: 'classes', description: 'Assemble the module into the local mods directory' ) {
+javascript.source {
+    dev {
+        js {
+            srcDir 'src/main/resources/static/js'
+            include "*.js"
+//            exclude "*.min.js"
+        }
+    }
+    prod {
+        js {
+            srcDir 'src/main/resources/static/js'
+            include "*.min.js"
+        }
+    }
+}
+
+task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
+    String jsSrcDir = 'src/main/resources/static/js/'
+    def tempSources = []
+    ['jquery.js','ZeroClipboard.min.js', 'sockjs.js', 'angular.min.js', 'angular-sanitize.min.js', 'vertxbus-2.1.js',
+            'angular-sanitize.min.js', 'angular-animate.min.js', 'angular-resource.min.js', 'angular-clip.js',
+            'ui-bootstrap.min.js', 'tinycon.min.js', 'instalogger.js'].each {
+        tempSources.add(jsSrcDir + it)
+    }
+    source = files(tempSources)
+    dest = file("build/compiledResources/static/js/all.js")
+}
+
+
+task copyResources( type:Copy ) {
+    into  'build/compiledResources/'
+    from  'src/main/resources'
+    exclude 'static/js'
+}
+
+task copyMod( type:Copy, dependsOn: ['classes', 'copyResources', 'combineJsInstalogger'], description: 'Assemble the module into the local mods directory' ) {
     into "build/mods/$moduleName"
     from compileJava
-    from 'src/main/resources'
+    from 'build/compiledResources'
     into( 'lib' ) {
         from configurations.compile
     }
