@@ -1,9 +1,3 @@
-/**
- * Created by andreytsarevskiy on 14/12/13.
- */
-
-
-
 function parseExceptionString(s) {
     try {
         var stackTrace = s.split(' ')[1];
@@ -28,7 +22,7 @@ function parseExceptionString(s) {
 }
 
 
-instaloggerApp.directive('logMessage', ['$http', '$compile', function ($http, $compile) {
+instaloggerApp.directive('logMessage', function ($http, $compile) {
     return {
         restrict: 'E',
         replace: true,
@@ -36,7 +30,7 @@ instaloggerApp.directive('logMessage', ['$http', '$compile', function ($http, $c
         scope: {
             message: '='
         },
-        link: function (scope, element, attrs) {
+        link: function (scope, element) {
             var message = scope.message;
             if (isError(message)) {
                 var strings = scope.message.text.split('\n');
@@ -93,4 +87,4 @@ instaloggerApp.directive('logMessage', ['$http', '$compile', function ($http, $c
             }
         }
     }
-}]);
+});

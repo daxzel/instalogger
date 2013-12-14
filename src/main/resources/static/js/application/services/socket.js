@@ -1,8 +1,3 @@
-/**
- * Created by andreytsarevskiy on 14/12/13.
- */
-
-
 instaloggerApp.factory('socket', function ($rootScope) {
     var sock = new SockJS("/eventbus");
     sock.onopen = function () {
@@ -18,9 +13,7 @@ instaloggerApp.factory('socket', function ($rootScope) {
     }
     sock.onclose = function () {
         $rootScope.$apply(function () {
-            $rootScope.$apply(function () {
-                $rootScope.$broadcast('socketOnClose', data)
-            });
+            $rootScope.$broadcast('socketOnClose', data)
         });
     }
 

@@ -1,8 +1,4 @@
-/**
- * Created by andreytsarevskiy on 14/12/13.
- */
-
-instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEvents', function ($rootScope, socket, serverEvents) {
+instaloggerApp.factory('unreadErrorMessages', function ($rootScope) {
 
     var unreadErrorMessages = {
         messages: {},
@@ -21,7 +17,7 @@ instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEv
         }
     }
 
-    $rootScope.$on("sendMessage",function (event, data) {
+    $rootScope.$on("sendMessage", function (event, data) {
         var message = data.value;
         if (isError(message)) {
             unreadErrorMessages.add(message);
@@ -29,4 +25,4 @@ instaloggerApp.factory('unreadErrorMessages', ['$rootScope', 'socket', 'serverEv
     })
 
     return unreadErrorMessages;
-}]);
+});

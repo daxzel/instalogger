@@ -1,9 +1,4 @@
-/**
- * Created by andreytsarevskiy on 14/12/13.
- */
-
-
-instaloggerApp.factory('serverEvents', ['$rootScope', function ($rootScope) {
+instaloggerApp.factory('serverEvents', function ($rootScope) {
 
     $rootScope.$on('socketOnMessage', function (event, response) {
         var data = jQuery.parseJSON(response.data);
@@ -32,4 +27,4 @@ instaloggerApp.factory('serverEvents', ['$rootScope', function ($rootScope) {
     });
     return { };
 
-}]);
+});

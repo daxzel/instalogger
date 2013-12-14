@@ -1,11 +1,5 @@
-/**
- * Created by andreytsarevskiy on 14/12/13.
- */
-
-
-instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$resource', 'messageServers', 'socket',
-    'unreadErrorMessages', '$modal', 'repeatedMessages',
-    function ($scope, $http, $sce, $resource, messageServers, socket, unreadErrorMessages, $modal, repeatedMessages) {
+instaloggerApp.controller('messagesController',
+    function ($scope, $http, messageServers, socket, unreadErrorMessages, $modal, repeatedMessages, logLevels) {
         $scope.servers = messageServers.values;
 
         $scope.unreadErrorMessages = unreadErrorMessages;
@@ -23,36 +17,7 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             });
         }
 
-        $scope.logLevels = {
-            10000: {
-                id: 10000,
-                alertStyle: 'alert-debug',
-                show: true,
-                buttonName: "Debug",
-                buttonStyle: 'btn-debug'
-            },
-            20000: {
-                id: 20000,
-                alertStyle: 'alert-info',
-                show: true,
-                buttonName: "Info",
-                buttonStyle: 'btn-info'
-            },
-            30000: {
-                id: 30000,
-                alertStyle: 'alert-warning',
-                show: true,
-                buttonName: "Warning",
-                buttonStyle: 'btn-warning'
-            },
-            40000: {
-                id: 40000,
-                alertStyle: 'alert-danger',
-                show: true,
-                buttonName: "Error",
-                buttonStyle: 'btn-danger'
-            }
-        }
+        $scope.logLevels = logLevels
 
         $scope.$on('socketOnClose', function () {
             $modal.open({
@@ -160,4 +125,4 @@ instaloggerApp.controller('messagesController', ['$scope', '$http', '$sce', '$re
             messageServers.refreshClear();
         };
 
-    }]);
+    });

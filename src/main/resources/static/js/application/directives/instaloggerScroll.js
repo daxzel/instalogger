@@ -1,9 +1,4 @@
-/**
- * Created by andreytsarevskiy on 14/12/13.
- */
-
-
-instaloggerApp.directive("instaloggerScroll", function ($window) {
+instaloggerApp.directive("instaloggerScroll", function () {
     return function (scope, element, attrs) {
         element.bind("scroll", function () {
             var offset = element.scrollTop()

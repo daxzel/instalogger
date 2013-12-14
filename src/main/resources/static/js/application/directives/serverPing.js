@@ -1,8 +1,4 @@
-
-
-
-
-instaloggerApp.directive('serverPing', ['serverEvents', function (serverEvents) {
+instaloggerApp.directive('serverPing', function () {
     return {
         restrict: 'E',
         replace: true,
@@ -45,4 +41,4 @@ instaloggerApp.directive('serverPing', ['serverEvents', function (serverEvents) 
             }, 1000);
         }
     }
-}]);
+});
