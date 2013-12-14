@@ -88,9 +88,19 @@ task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
     def tempSources = []
     ['jquery.js','ZeroClipboard.min.js', 'sockjs.js', 'angular.min.js', 'angular-sanitize.min.js', 'vertxbus-2.1.js',
             'angular-sanitize.min.js', 'angular-animate.min.js', 'angular-resource.min.js', 'angular-clip.js',
-            'ui-bootstrap.min.js', 'tinycon.min.js', 'instalogger.js'].each {
+            'ui-bootstrap.min.js', 'tinycon.min.js'].each {
         tempSources.add(jsSrcDir + it)
     }
+
+    String applicationJsSrcDir = jsSrcDir + 'application/'
+
+    ['application.js','services/messageServers.js', 'services/repeatedMessages.js', 'services/serverEvents.js',
+            'services/socket.js', 'services/unreadErrorMessages.js','controllers/messagesController.js',
+            'controllers/dialogController.js', 'directives/serverPing.js', 'directives/logMessage.js',
+            'directives/serverPing.js'].each {
+        tempSources.add(applicationJsSrcDir + it)
+    }
+
     source = files(tempSources)
     dest = file("build/compiledResources/static/js/all.js")
 }
