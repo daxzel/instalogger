@@ -161,7 +161,8 @@ public class MainVerticle extends Verticle {
 
                 int hash = text.hashCode();
                 RepeatedMessageRecord repeatedMessageRecord = dslContext.selectFrom(REPEATED_MESSAGE)
-                        .where(REPEATED_MESSAGE.HASH.equal(hash)).fetchAny();
+                        .where(REPEATED_MESSAGE.HASH.equal(hash))
+                        .and(REPEATED_MESSAGE.SERVER_ID.equal(serverId)).fetchAny();
 
                 if (repeatedMessageRecord == null) {
                     MessageRecord message = dslContext

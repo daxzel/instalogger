@@ -97,7 +97,7 @@ task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
     ['application.js','services/messageServers.js', 'services/repeatedMessages.js', 'services/logLevels.js',
             'services/serverEvents.js', 'services/socket.js', 'services/unreadErrorMessages.js',
             'controllers/messagesController.js', 'controllers/dialogController.js', 'directives/serverPing.js',
-            'directives/logMessage.js', 'directives/serverPing.js'].each {
+            'filters/byServer.js','directives/logMessage.js', 'directives/serverPing.js'].each {
         tempSources.add(applicationJsSrcDir + it)
     }
 

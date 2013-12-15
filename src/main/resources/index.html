@@ -8,17 +8,6 @@
     <link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
     <link href="static/css/instalogger.css" rel="stylesheet" media="screen">
     <link href="static/css/font-awesome.css" rel="stylesheet">
-    <!--<script src="static/js/jquery.js"></script>-->
-    <!--<script src="static/js/ZeroClipboard.min.js"></script>-->
-    <!--<script src="static/js/sockjs.js"></script>-->
-    <!--<script src="static/js/angular.min.js"></script>-->
-    <!--<script src="static/js/vertxbus-2.1.js"></script>-->
-    <!--<script src="static/js/angular-sanitize.min.js"></script>-->
-    <!--<script src="static/js/angular-animate.min.js"></script>-->
-    <!--<script src="static/js/angular-resource.min.js"></script>-->
-    <!--<script src="static/js/angular-clip.js"></script>-->
-    <!--<script src="static/js/ui-bootstrap.min.js"></script>-->
-    <!--<script src="static/js/tinycon.min.js"></script>-->
     <script src="static/js/all.js"></script>
 </head>
 <body ng-app="instaloggerApp">
@@ -87,7 +76,7 @@
                     </button>
 
                     <div class="btn-group btn-group-xs instalogger-repeated-message"
-                         ng-repeat="repeatedMessage in repeatedMessages">
+                         ng-repeat="repeatedMessage in repeatedMessages | byServer:server">
                         <button type="button" class="btn btn-default
                             btn-xs instalogger-unclickable-button instalogger-repeated-message-count">
                             {{repeatedMessage.count}}
