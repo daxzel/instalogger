@@ -32,10 +32,19 @@
                     <h3>Adding repeated messages</h3>
                 </div>
                 <div class="modal-body">
-                    <input type="text" class="form-control" placeholder="Name" ng-model="name">
+                    <form name="repeatedMessage">
+                        <input type="text" class="form-control" ng-maxlength="15"
+                               name="name" placeholder="Name" ng-model="name">
+                    </form>
+                    <div class="alert alert-danger" ng-show="repeatedMessage.name.$error.maxlength">
+                        Too long!
+                    </div>
+                    <span class="error" ng-show="repeatedMessage.name.$error.maxlength"></span>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary" ng-click="ok(name)">OK</button>
+                    <button class="btn btn-primary"
+                            ng-show="!repeatedMessage.name.$error.maxlength"
+                            ng-click="ok(name)">OK</button>
                     <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
                 </div>
             </div>
@@ -74,23 +83,29 @@
                     <button type="button" class="btn btn-default btn-xs pull-right" ng-click="clearServer(server)">
                         <span class="glyphicon glyphicon-trash"></span>
                     </button>
-
-                    <div class="btn-group btn-group-xs instalogger-repeated-message"
-                         ng-repeat="repeatedMessage in repeatedMessages | byServer:server">
-                        <button type="button" class="btn btn-default
-                            btn-xs instalogger-unclickable-button instalogger-repeated-message-count">
-                            {{repeatedMessage.count}}
-                        </button>
-                        <button type="button" class="btn btn-default btn-xs instalogger-unclickable-button">
-                            {{repeatedMessage.name}}
-                        </button>
-                        <button type="button" class="btn btn-default btn-xs"
-                                ng-click="removeRepeatedMessage(repeatedMessage)">
-                            <i  class="fa fa-times"></i>
-                        </button>
+                </div>
+                <div class="panel-heading instalogger-panel-server-heading"
+                     ng-show="isExistsRepeatedMessage(repeatedMessages, server)">
+                    <div>
+                        <ul class="nav nav-pills">
+                            <li ng-repeat="repeatedMessage in repeatedMessages | byServer:server"
+                                class="active" ng-init="showRepeatedMessageAction = false"
+                                ng-mouseenter="showRepeatedMessageAction = true"
+                                ng-mouseleave="showRepeatedMessageAction = false">
+                                <button type="button" ng-show="showRepeatedMessageAction"
+                                        class="btn btn-danger instalogger-remove-repeated-message"
+                                        ng-click="removeRepeatedMessage(repeatedMessage)">
+                                    <span class="glyphicon glyphicon-trash"/>
+                                </button>
+                                <a href="#" class="instalogger-repeated-message-nav-pill">{{repeatedMessage.name}}
+                                    <span class="badge">{{repeatedMessage.count}}</span>
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
                 <div class="panel-body instalogger-message-panel-body" instalogger-scroll="messageScroll(server)">
+
                     <div id="{{ 'outer-' + server.id }}" style="overflow-y:hidden;">
                         <div id="{{ 'message-' + message.id }}" ng-mouseover="overMessage(message)"
                              ng-repeat="message in server.messages" class="alert"

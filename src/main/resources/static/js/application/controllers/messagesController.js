@@ -6,6 +6,15 @@ instaloggerApp.controller('messagesController',
 
         $scope.repeatedMessages = repeatedMessages.values;
 
+        $scope.isExistsRepeatedMessage = function (repeatedMessages, server) {
+            for (var key in repeatedMessages) {
+                if (repeatedMessages[key].server_id === server.id) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         $scope.addRepeatedMessage = function (message) {
             var modalInstance = $modal.open({
                 templateUrl: 'nameDialog.html',

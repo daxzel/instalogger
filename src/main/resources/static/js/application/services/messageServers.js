@@ -63,7 +63,7 @@ instaloggerApp.factory('messageServers', function ($rootScope, socket, $http) {
         }
     })
 
-    $rootScope.$on("Refresh", function (event, data) {
+    $rootScope.$on("refresh", function (event, data) {
         var value = data.value;
         var server = servers.values[value.serverId]
         server.messages = value.messages
