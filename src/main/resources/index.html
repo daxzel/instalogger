@@ -51,6 +51,24 @@
         </div>
     </script>
 
+    <script type="text/ng-template" id="messageDialog.html">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="alert"  ng-class="getClassOfAlert(message)">
+                        <div class="btn-group btn-group-xs">
+                            <button type="button" class="btn btn-default btn-xs" clip-copy="message.text"
+                                    ng-show="isError(message)">
+                                <span class="fa fa-clipboard"/>Copy
+                            </button>
+                        </div>
+                        <span class="instalogger-message-text"><log-message message="message"/></span>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </script>
 
     <div class="instalogger-fluid-container instalogger-controls instalogger-controls-fixed">
         <div class="btn-group btn-group-sm pull-left">
@@ -118,7 +136,7 @@
                                 </button>
 
                                 <button type="button" class="btn btn-default btn-xs"
-                                        ng-click="addRepeatedMessage(message)">
+                                        ng-click="addRepeatedMessage(message, server)">
                                     <span class="fa fa-unlock-alt"/>Repeated
                                 </button>
                             </div>

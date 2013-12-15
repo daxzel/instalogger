@@ -15,13 +15,13 @@ instaloggerApp.controller('messagesController',
             return false;
         }
 
-        $scope.addRepeatedMessage = function (message) {
+        $scope.addRepeatedMessage = function (message, server) {
             var modalInstance = $modal.open({
                 templateUrl: 'nameDialog.html',
                 controller: 'dialogController'
             });
             modalInstance.result.then(function (name) {
-                messageServers.removeMessage(message);
+                messageServers.lazyRefreshClearServer(server)
                 repeatedMessages.add(message, name);
             });
         }
@@ -50,7 +50,7 @@ instaloggerApp.controller('messagesController',
             info.term = text;
             info.command = 'search';
             socket.send(JSON.stringify(info));
-            messageServers.refreshClear();
+            messageServers.lazyRefreshClear();
         }
 
         $scope.$watch('unreadErrorMessages', function () {
@@ -131,7 +131,7 @@ instaloggerApp.controller('messagesController',
             info.value = level.show;
             info.command = 'changeConfig';
             socket.send(JSON.stringify(info));
-            messageServers.refreshClear();
+            messageServers.lazyRefreshClear();
         };
 
     });

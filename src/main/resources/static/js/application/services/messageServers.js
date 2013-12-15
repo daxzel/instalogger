@@ -44,11 +44,15 @@ instaloggerApp.factory('messageServers', function ($rootScope, socket, $http) {
         }
     }
 
-    servers.refreshClear = function () {
+    servers.lazyRefreshClearServer = function (server) {
+        server.messages = [];
+        server.refresh = true
+    }
+
+    servers.lazyRefreshClear = function () {
         for (var id in servers.values) {
             var server = servers.values[id];
-            servers.values[id].messages = [];
-            server.refresh = true
+            this.lazyRefreshClearServer(server);
         }
     }
 

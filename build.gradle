@@ -1,4 +1,3 @@
-
 import org.vertx.java.platform.impl.cli.Starter
 
 
@@ -86,7 +85,7 @@ javascript.source {
 task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
     String jsSrcDir = 'src/main/resources/static/js/'
     def tempSources = []
-    ['jquery.js','ZeroClipboard.min.js', 'sockjs.js', 'angular.min.js', 'angular-sanitize.min.js', 'vertxbus-2.1.js',
+    ['jquery.js', 'ZeroClipboard.min.js', 'sockjs.js', 'angular.min.js', 'angular-sanitize.min.js', 'vertxbus-2.1.js',
             'angular-sanitize.min.js', 'angular-animate.min.js', 'angular-resource.min.js', 'angular-clip.js',
             'ui-bootstrap.min.js', 'tinycon.min.js'].each {
         tempSources.add(jsSrcDir + it)
@@ -94,10 +93,10 @@ task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
 
     String applicationJsSrcDir = jsSrcDir + 'application/'
 
-    ['application.js','services/messageServers.js', 'services/repeatedMessages.js', 'services/logLevels.js',
+    ['application.js', 'services/messageServers.js', 'services/repeatedMessages.js', 'services/logLevels.js',
             'services/serverEvents.js', 'services/socket.js', 'services/unreadErrorMessages.js',
             'controllers/messagesController.js', 'controllers/dialogController.js', 'directives/serverPing.js',
-            'filters/byServer.js','directives/logMessage.js', 'directives/serverPing.js'].each {
+            'filters/byServer.js', 'directives/logMessage.js', 'directives/serverPing.js'].each {
         tempSources.add(applicationJsSrcDir + it)
     }
 
@@ -106,22 +105,22 @@ task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
 }
 
 
-task copyResources( type:Copy ) {
-    into  'build/compiledResources/'
-    from  'src/main/resources'
+task copyResources(type: Copy) {
+    into 'build/compiledResources/'
+    from 'src/main/resources'
     exclude 'static/js'
 }
 
-task copyMod( type:Copy, dependsOn: ['classes', 'copyResources', 'combineJsInstalogger'], description: 'Assemble the module into the local mods directory' ) {
+task copyMod(type: Copy, dependsOn: ['classes', 'copyResources', 'combineJsInstalogger'], description: 'Assemble the module into the local mods directory') {
     into "build/mods/$moduleName"
     from compileJava
     from 'build/compiledResources'
-    into( 'lib' ) {
+    into('lib') {
         from configurations.compile
     }
 }
 
-task modZip( type: Zip, dependsOn: 'pullInDeps', description: 'Package the module .zip file') {
+task modZip(type: Zip, dependsOn: 'pullInDeps', description: 'Package the module .zip file') {
     group = 'vert.x'
     classifier = "mod"
     description = "Assembles a vert.x module"
@@ -130,17 +129,12 @@ task modZip( type: Zip, dependsOn: 'pullInDeps', description: 'Package the modul
     from copyMod
 }
 
-task runModIDEA(dependsOn: copyMod, description: 'Run the module from the resources in IntelliJ') << {
-    runModWithClasspath("src/main/resources/src/main/resources/${cpSeparator}src/test/resources/${cpSeparator}" +
-            "out/production/${project.name}/${cpSeparator}out/test/${project.name}/");
-}
-
 def runModWithClasspath(String classpath) {
     setSysProps()
     def args = ['runmod', moduleName]
-    def args2 = runModArgs.split("\\s+")
+    def args2 = ['-conf', "$projectDir/conf.json"]
     boolean ignoring = false
-    for (String arg: args2) {
+    for (String arg : args2) {
         if (arg == '-cp') {
             ignoring = true
         } else if (!ignoring) {
@@ -152,6 +146,10 @@ def runModWithClasspath(String classpath) {
     args.add('-cp')
     args.add(classpath)
     Starter.main(args as String[])
+}
+
+task runModIDEA(dependsOn: copyMod, description: 'Run the module from the resources in IntelliJ') << {
+    runModWithClasspath(project.file("build/mods/$moduleName").path);
 }
 
 task runMod(dependsOn: copyMod, description: 'Run the module using all the build dependencies (not using installed vertx') << {
@@ -181,7 +179,7 @@ configure(log4jModule) {
     }
 }
 
-task copyExecutable( type:Copy, description: 'Copy executable files (exe and sh) to result dir' ) {
+task copyExecutable(type: Copy, description: 'Copy executable files (exe and sh) to result dir') {
     into programDir
     from "program"
 }
@@ -204,7 +202,7 @@ task renameFatJar(type: Copy, dependsOn: fatJar) {
 }
 
 task moveFatJar(type: Delete, dependsOn: renameFatJar) {
-    delete  fileTree('src') {
+    delete fileTree('src') {
         from programDir
         include '*fat.jar'
     }
@@ -299,14 +297,14 @@ task generateJooq() << {
 }
 
 dependencies {
-  compile "org.codehaus.groovy:groovy-all:$groovyVersion"
-  compile "io.vertx:lang-groovy:$groovyLangModVersion@jar"
-  compile "org.jooq:jooq:3.2.0"
-  compile "postgresql:postgresql:9.1-901.jdbc4"
-  compile "com.google.guava:guava:15.0"
-  compile 'org.apache.lucene:lucene-core:4.6.0'
-  compile 'org.apache.lucene:lucene-analyzers-common:4.6.0'
-  compile 'org.apache.lucene:lucene-queryparser:4.6.0'
-  compile 'org.apache.lucene:lucene-memory:4.6.0'
+    compile "org.codehaus.groovy:groovy-all:$groovyVersion"
+    compile "io.vertx:lang-groovy:$groovyLangModVersion@jar"
+    compile "org.jooq:jooq:3.2.0"
+    compile "postgresql:postgresql:9.1-901.jdbc4"
+    compile "com.google.guava:guava:15.0"
+    compile 'org.apache.lucene:lucene-core:4.6.0'
+    compile 'org.apache.lucene:lucene-analyzers-common:4.6.0'
+    compile 'org.apache.lucene:lucene-queryparser:4.6.0'
+    compile 'org.apache.lucene:lucene-memory:4.6.0'
 }
 

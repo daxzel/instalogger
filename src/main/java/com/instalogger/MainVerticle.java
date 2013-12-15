@@ -115,8 +115,9 @@ public class MainVerticle extends Verticle {
                 if (offsetParam != null) {
                     offset = Integer.valueOf(offsetParam);
                 }
-                String result = JsonHelper.formatJSON(dslContext.select().from(MESSAGE)
+                String result = JsonHelper.formatJSON(dslContext.selectFrom(MESSAGE)
                         .where(MESSAGE.SERVER_ID.equal(serverId))
+                        .and(MESSAGE.NOT_SHOW.equal(false))
                         .and(MESSAGE.LOG_LEVEL.in(showLevelSettings.getShowingLevels()))
                         .orderBy(MESSAGE.ID.desc()).limit(offset, BUFFER_SIZE).fetch());
                 event.response().setChunked(true);
@@ -254,6 +255,7 @@ public class MainVerticle extends Verticle {
 
                 SelectConditionStep selectConditionStep = dslContext.select().from(MESSAGE)
                         .where(MESSAGE.SERVER_ID.equal(serverId))
+                        .and(MESSAGE.NOT_SHOW.equal(false))
                         .and(MESSAGE.LOG_LEVEL.in(sockInfo.getShowLevelSettings().getShowingLevels()));
 
                 try {
@@ -294,13 +296,22 @@ public class MainVerticle extends Verticle {
 
                 MessageRecord messageRecord =
                         dslContext.selectFrom(MESSAGE).where(MESSAGE.ID.equal(messageId)).fetchOne();
+
+                dslContext.update(MESSAGE)
+                        .set(MESSAGE.NOT_SHOW, true)
+                        .where(MESSAGE.HASH.equal(messageRecord.getHash()))
+                        .and(MESSAGE.SERVER_ID.equal(messageRecord.getServerId())).execute();
+
+                int count = dslContext.selectCount().from(MESSAGE)
+                        .where(MESSAGE.HASH.equal(messageRecord.getHash()))
+                        .and(MESSAGE.SERVER_ID.equal(messageRecord.getServerId())).fetch().get(0).value1();
+
                 RepeatedMessageRecord repeatedMessageRecordId = dslContext.insertInto(REPEATED_MESSAGE,
                         REPEATED_MESSAGE.HASH, REPEATED_MESSAGE.LOG_LEVEL, REPEATED_MESSAGE.NAME,
-                        REPEATED_MESSAGE.TEXT, REPEATED_MESSAGE.SERVER_ID)
+                        REPEATED_MESSAGE.TEXT, REPEATED_MESSAGE.SERVER_ID, REPEATED_MESSAGE.COUNT)
                         .values(messageRecord.getHash(), messageRecord.getLogLevel(), name, messageRecord.getText(),
-                                messageRecord.getServerId())
+                                messageRecord.getServerId(), count)
                         .returning(REPEATED_MESSAGE.ID).fetchOne();
-                messageRecord.delete();
 
                 RepeatedMessageRecord repeatedMessageRecord = dslContext.selectFrom(REPEATED_MESSAGE)
                         .where(REPEATED_MESSAGE.ID.equal(repeatedMessageRecordId.getId())).fetchOne();
@@ -322,6 +333,11 @@ public class MainVerticle extends Verticle {
                     });
                 }
 
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.putString("sockJs", sockJSId);
+                jsonObject.putNumber("offset", 0);
+                jsonObject.putNumber("serverId", repeatedMessageRecord.getServerId());
+                eventBus.send("upload", jsonObject);
             }
         });
 
@@ -361,7 +377,22 @@ public class MainVerticle extends Verticle {
             public void handle(Message<JsonObject> message) {
                 JsonObject request = message.body();
                 Integer repeatedMessageId = request.getNumber("repeatedMessageId").intValue();
-                dslContext.delete(REPEATED_MESSAGE).where(REPEATED_MESSAGE.ID.equal(repeatedMessageId)).execute();
+                RepeatedMessageRecord repeatedMessageRecord =
+                        dslContext.selectFrom(REPEATED_MESSAGE)
+                                .where(REPEATED_MESSAGE.ID.equal(repeatedMessageId)).fetchOne();
+
+                dslContext.update(MESSAGE)
+                        .set(MESSAGE.NOT_SHOW, false)
+                        .where(MESSAGE.HASH.equal(repeatedMessageRecord.getHash()))
+                        .and(MESSAGE.SERVER_ID.equal(repeatedMessageRecord.getServerId())).execute();
+
+                String sockJSId = request.getString("sockJs");
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.putString("sockJs", sockJSId);
+                jsonObject.putNumber("offset", 0);
+                jsonObject.putNumber("serverId", repeatedMessageRecord.getServerId());
+                eventBus.send("upload", jsonObject);
+                repeatedMessageRecord.delete();
             }
         });
 
