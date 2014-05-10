@@ -82,6 +82,15 @@ javascript.source {
     }
 }
 
+def jsSourcesInstaloggerTemp = []
+['application.js', 'services/messageServers.js', 'services/repeatedMessages.js', 'services/logLevels.js',
+        'services/serverEvents.js', 'services/socket.js', 'services/unreadErrorMessages.js',
+        'controllers/messagesController.js', 'controllers/dialogController.js', 'directives/serverPing.js',
+        'filters/byServer.js', 'directives/logMessage.js', 'directives/serverPing.js'].each {
+    jsSourcesInstaloggerTemp.add('src/main/resources/static/js/application/' + it)
+}
+def jsSourcesInstalogger = files(jsSourcesInstaloggerTemp)
+
 task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
     String jsSrcDir = 'src/main/resources/static/js/'
     def tempSources = []
@@ -91,19 +100,15 @@ task combineJsInstalogger(type: com.eriwen.gradle.js.tasks.CombineJsTask) {
         tempSources.add(jsSrcDir + it)
     }
 
-    String applicationJsSrcDir = jsSrcDir + 'application/'
-
-    ['application.js', 'services/messageServers.js', 'services/repeatedMessages.js', 'services/logLevels.js',
-            'services/serverEvents.js', 'services/socket.js', 'services/unreadErrorMessages.js',
-            'controllers/messagesController.js', 'controllers/dialogController.js', 'directives/serverPing.js',
-            'filters/byServer.js', 'directives/logMessage.js', 'directives/serverPing.js'].each {
-        tempSources.add(applicationJsSrcDir + it)
-    }
-
-    source = files(tempSources)
+    source = files(tempSources) + jsSourcesInstalogger
     dest = file("build/compiledResources/static/js/all.js")
 }
 
+task jsHintJsInstalogger(type: com.eriwen.gradle.js.tasks.JsHintTask) {
+    source = jsSourcesInstalogger
+    ignoreExitCode = true
+    outputToStdOut = true
+}
 
 task copyResources(type: Copy) {
     into 'build/compiledResources/'
@@ -111,7 +116,7 @@ task copyResources(type: Copy) {
     exclude 'static/js'
 }
 
-task copyMod(type: Copy, dependsOn: ['classes', 'copyResources', 'combineJsInstalogger'], description: 'Assemble the module into the local mods directory') {
+task copyMod(type: Copy, dependsOn: ['classes', 'copyResources', 'jsHintJsInstalogger', 'combineJsInstalogger'], description: 'Assemble the module into the local mods directory') {
     into "build/mods/$moduleName"
     from compileJava
     from 'build/compiledResources'
@@ -152,7 +157,7 @@ task runModIDEA(dependsOn: copyMod, description: 'Run the module from the resour
     runModWithClasspath(project.file("build/mods/$moduleName").path);
 }
 
-task runMod(dependsOn: copyMod, description: 'Run the module using all the build dependencies (not using installed vertx') << {
+task start(dependsOn: copyMod, description: 'Run the module using all the build dependencies (not using installed vertx') << {
     setSysProps()
     def args = ['runmod', moduleName]
     def args2 = runModArgs.split("\\s+")
