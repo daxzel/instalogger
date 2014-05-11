@@ -28,7 +28,7 @@ instaloggerApp.factory('logLevels', function () {
             buttonName: "Error",
             buttonStyle: 'btn-danger'
         }
-    }
+    };
 
     return logLevels;
 });

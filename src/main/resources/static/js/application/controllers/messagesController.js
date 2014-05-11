@@ -13,7 +13,7 @@ instaloggerApp.controller('messagesController',
                 }
             }
             return false;
-        }
+        };
 
         $scope.addRepeatedMessage = function (message, server) {
             var modalInstance = $modal.open({
@@ -21,12 +21,12 @@ instaloggerApp.controller('messagesController',
                 controller: 'dialogController'
             });
             modalInstance.result.then(function (name) {
-                messageServers.lazyRefreshClearServer(server)
+                messageServers.lazyRefreshClearServer(server);
                 repeatedMessages.add(message, name);
             });
-        }
+        };
 
-        $scope.logLevels = logLevels
+        $scope.logLevels = logLevels;
 
         $scope.$on('socketOnClose', function () {
             $modal.open({
@@ -39,11 +39,11 @@ instaloggerApp.controller('messagesController',
 
         $scope.isError = function (message) {
             return isError(message);
-        }
+        };
 
         $scope.removeRepeatedMessage = function (repeatedMessage) {
             repeatedMessages.remove(repeatedMessage);
-        }
+        };
 
         $scope.searchTextChanged = function (text) {
             var info = {};
@@ -51,7 +51,7 @@ instaloggerApp.controller('messagesController',
             info.command = 'search';
             socket.send(JSON.stringify(info));
             messageServers.lazyRefreshClear();
-        }
+        };
 
         $scope.$watch('unreadErrorMessages', function () {
             var length = $scope.unreadErrorMessages.length;
@@ -68,36 +68,36 @@ instaloggerApp.controller('messagesController',
         }, true);
 
         $scope.overMessage = function (message) {
-            if ($scope.unreadErrorMessages.messages[message.id] != undefined) {
-                $scope.unreadErrorMessages.read(message)
+            if ($scope.unreadErrorMessages.messages[message.id] !== undefined) {
+                $scope.unreadErrorMessages.read(message);
             }
-        }
+        };
 
         $scope.isUnread = function (message) {
-            return $scope.unreadErrorMessages.messages[message.id] != undefined;
-        }
+            return $scope.unreadErrorMessages.messages[message.id] !== undefined;
+        };
 
         $scope.readAll = function () {
             $scope.unreadErrorMessages.readAll();
-        }
+        };
 
         $scope.clearServer = function (server) {
             var successFunction = function () {
                 delete $scope.servers[server.id];
                 server.messages = server.messages.concat(result);
                 server.refresh = false;
-            }
+            };
             server.refresh = true;
             $http({
                 method: 'DELETE',
                 url: '/server',
                 params: {id: server.id}
             }).success(successFunction);
-        }
+        };
 
         $scope.getClassOfAlert = function (message) {
-            return $scope.logLevels[message.log_level].alertStyle
-        }
+            return $scope.logLevels[message.log_level].alertStyle;
+        };
 
         $scope.messageScroll = function (server) {
             if (!server.refresh) {
@@ -108,10 +108,9 @@ instaloggerApp.controller('messagesController',
                     info.offset = server.messages.length;
                     info.command = 'lazyMessagesDownload';
                     socket.send(JSON.stringify(info));
-                    server.refresh = true
-                } else {
+                    server.refresh = true;
+                } else
                     server.refresh = false;
-                }
             }
         };
 

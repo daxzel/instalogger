@@ -14,9 +14,9 @@ instaloggerApp.factory('repeatedMessages', function (socket, serverEvents, $root
             info.repeatedMessageId = repeatedMessage.id;
             info.command = 'removeRepeatedMessage';
             socket.send(JSON.stringify(info));
-            delete this.values[repeatedMessage.id]
+            delete this.values[repeatedMessage.id];
         }
-    }
+    };
 
     $rootScope.$on('socketOnOpen', function () {
         var info = {};
@@ -29,16 +29,16 @@ instaloggerApp.factory('repeatedMessages', function (socket, serverEvents, $root
         angular.forEach(data.value, function (item) {
             repeatedMessages.values[item.id] = item;
         });
-    })
+    });
 
     $rootScope.$on("addRepeatedMessage", function (event, data) {
         var repeatedMessage = data.value;
-        if (repeatedMessages.values[repeatedMessage.id] != undefined) {
-            repeatedMessages.values[repeatedMessage.id].count = repeatedMessage.count
+        if (repeatedMessages.values[repeatedMessage.id] !== undefined) {
+            repeatedMessages.values[repeatedMessage.id].count = repeatedMessage.count;
         } else {
-            repeatedMessages.values[repeatedMessage.id] = repeatedMessage
+            repeatedMessages.values[repeatedMessage.id] = repeatedMessage;
         }
-    })
+    });
 
     return repeatedMessages;
 });

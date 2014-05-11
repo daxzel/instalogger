@@ -1,9 +1,9 @@
 var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap',
-    'ngClipboard'])
+    'ngClipboard']);
 
 if (typeof String.prototype.startsWith != 'function') {
     String.prototype.startsWith = function (str) {
-        return this.indexOf(str) == 0;
+        return this.indexOf(str) === 0;
     };
 }
 
@@ -14,7 +14,7 @@ if (typeof String.prototype.contains != 'function') {
 }
 
 function isError(message) {
-    return (message.log_level == 40000)
+    return (message.log_level == 40000);
 }
 
 

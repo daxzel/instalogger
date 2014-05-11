@@ -5,17 +5,17 @@ function parseExceptionString(s) {
         var clazz = (stackTrace.split('(')[1]).split(':');
         var className = clazz[0];
         var stringNumber = (clazz[1]).split(')')[0];
-        var result = []
+        var result = [];
         for (var i = 0; i < pacckages.length - 3; i++) {
-            result.push(pacckages[i])
-            result.push("/")
+            result.push(pacckages[i]);
+            result.push("/");
         }
-        result.push(className)
+        result.push(className);
 
         var distinguishClass = s.split("(");
 
-        return distinguishClass[0] + "(<a ng-click=\"ideOpen('" + result.join("") + "','"
-            + stringNumber + "')\">" + distinguishClass[1].split(")")[0] + "</a>)"
+        return distinguishClass[0] + "(<a ng-click=\"ideOpen('" + result.join("") + "','" +
+            stringNumber + "')\">" + distinguishClass[1].split(")")[0] + "</a>)";
     } catch (e) {
         return s;
     }
@@ -34,13 +34,13 @@ instaloggerApp.directive('logMessage', function ($http, $compile) {
             var message = scope.message;
             if (isError(message)) {
                 var strings = scope.message.text.split('\n');
-                var result = []
-                result.push('[')
-                result.push(message.create_time)
-                result.push('] ')
-                result.push("<b>")
-                result.push(strings[0])
-                result.push("</b>")
+                var result = [];
+                result.push('[');
+                result.push(message.create_time);
+                result.push('] ');
+                result.push("<b>");
+                result.push(strings[0]);
+                result.push("</b>");
 
                 scope.ideOpen = function (className, stringNumber) {
                     $http({
@@ -50,34 +50,34 @@ instaloggerApp.directive('logMessage', function ($http, $compile) {
                             file: className,
                             line: stringNumber
                         }
-                    })
-                }
+                    });
+                };
 
                 for (var i = 1; i < strings.length; i++) {
-                    result.push("<br/>")
+                    result.push("<br/>");
                     if (strings[i].startsWith("\tat ")) {
-                        result.push("<b>             ")
-                        if (strings[i].contains('thesis')
-                            || strings[i].contains('docflow')
-                            || strings[i].contains('taskman')
-                            || strings[i].contains('.ext.')) {
-                            result.push('<span style=\"color: green\">')
-                            result.push(parseExceptionString(strings[i]))
-                            result.push('</span>')
+                        result.push("<b>             ");
+                        if (strings[i].contains('thesis') ||
+                            strings[i].contains('docflow') ||
+                            strings[i].contains('taskman') ||
+                            strings[i].contains('.ext.')) {
+                            result.push('<span style=\"color: green\">');
+                            result.push(parseExceptionString(strings[i]));
+                            result.push('</span>');
                         } else {
                             if (strings[i].contains('cuba')) {
-                                result.push('<span style=\"color: blue\">')
-                                result.push(parseExceptionString(strings[i]))
-                                result.push('</span>')
+                                result.push('<span style=\"color: blue\">');
+                                result.push(parseExceptionString(strings[i]));
+                                result.push('</span>');
                             } else {
-                                result.push(parseExceptionString(strings[i]))
+                                result.push(parseExceptionString(strings[i]));
                             }
                         }
-                        result.push("</b>")
+                        result.push("</b>");
                     } else {
-                        result.push("<b>")
-                        result.push(strings[i])
-                        result.push("</b>")
+                        result.push("<b>");
+                        result.push(strings[i]);
+                        result.push("</b>");
                     }
                 }
                 element.html(result.join(""));
@@ -86,5 +86,5 @@ instaloggerApp.directive('logMessage', function ($http, $compile) {
                 element.html(message.text);
             }
         }
-    }
+    };
 });

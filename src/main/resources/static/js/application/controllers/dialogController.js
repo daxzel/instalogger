@@ -8,4 +8,4 @@ instaloggerApp.controller('dialogController', function ($scope, $modalInstance) 
         $modalInstance.dismiss('cancel');
     };
 
-})
+});
