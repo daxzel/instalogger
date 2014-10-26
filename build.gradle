@@ -18,8 +18,8 @@ archivesBaseName = modname
 
 defaultTasks = ['assemble']
 
-sourceCompatibility = '1.7'
-targetCompatibility = '1.7'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
 project.ext.moduleName = "$modowner~$modname~$version"
 
@@ -113,10 +113,10 @@ task jsHintJsInstalogger(type: com.eriwen.gradle.js.tasks.JsHintTask) {
 task copyResources(type: Copy) {
     into 'build/compiledResources/'
     from 'src/main/resources'
-    exclude 'static/js'
+//    exclude 'static/js'
 }
 
-task copyMod(type: Copy, dependsOn: ['classes', 'copyResources', 'jsHintJsInstalogger', 'combineJsInstalogger'], description: 'Assemble the module into the local mods directory') {
+task copyMod(type: Copy, dependsOn: ['classes', 'copyResources', 'jsHintJsInstalogger'], description: 'Assemble the module into the local mods directory') {
     into "build/mods/$moduleName"
     from compileJava
     from 'build/compiledResources'

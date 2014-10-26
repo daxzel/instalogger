@@ -1,15 +1,12 @@
 package com.instalogger.helpers;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -63,10 +60,11 @@ public class DBUpdater {
 
 
         boolean dbVersionChanged = false;
-        for (; dbVersion < orderedFiles.size(); dbVersion++) {
+        while (dbVersion < orderedFiles.size()) {
             String script = Files.toString(orderedFiles.get(dbVersion), Charset.defaultCharset());
             conn.prepareCall(script).executeUpdate();
             dbVersionChanged = true;
+            dbVersion++;
         }
 
         if (dbVersionChanged) {
