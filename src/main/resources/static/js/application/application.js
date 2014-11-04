@@ -1,8 +1,8 @@
-require(['angular-modules'], function() {
+define(['angular-modules'], function() {
 
-    var instaloggerApp = angular.module('instaloggerApp', []);
-    //var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap',
-    //    'ngClipboard']);
+    var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap']);
+        //'ui.bootstrap',
+        //'ngClipboard']);
 
     if (typeof String.prototype.startsWith != 'function') {
         String.prototype.startsWith = function (str) {
@@ -19,6 +19,8 @@ require(['angular-modules'], function() {
     function isError(message) {
         return (message.log_level == 40000);
     }
+
+    return instaloggerApp;
 });
 
 

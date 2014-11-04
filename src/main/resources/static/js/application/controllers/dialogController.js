@@ -1,11 +1,14 @@
-instaloggerApp.controller('dialogController', function ($scope, $modalInstance) {
-    $scope.ok = function (name) {
-        $modalInstance.close(name);
-    };
+define(['instaloggerApp'], function (instaloggerApp) {
+    instaloggerApp.controller('dialogController', function ($scope, $modalInstance) {
+        $scope.ok = function (name) {
+            $modalInstance.close(name);
+        };
 
 
-    $scope.cancel = function () {
-        $modalInstance.dismiss('cancel');
-    };
+        $scope.cancel = function () {
+            $modalInstance.dismiss('cancel');
+        };
 
+    });
 });
+

@@ -1,30 +1,32 @@
-instaloggerApp.factory('serverEvents', function ($rootScope) {
+define(['instaloggerApp'], function (instaloggerApp) {
+    instaloggerApp.factory('serverEvents', function ($rootScope) {
 
-    $rootScope.$on('socketOnMessage', function (event, response) {
-        var data = jQuery.parseJSON(response.data);
-        switch (data.command) {
-            case 'sendMessage':
-                $rootScope.$broadcast("sendMessage", data);
-                $rootScope.$broadcast("serverPing", data.value.server_id);
-                break;
-            case 'refresh':
-                $rootScope.$broadcast("refresh", data);
-                break;
-            case 'lazyMessagesDownload':
-                $rootScope.$broadcast("lazyMessagesDownload", data);
-                break;
-            case 'addRepeatedMessage':
-                $rootScope.$broadcast("addRepeatedMessage", data);
-                break;
-            case 'serverPing':
-                $rootScope.$broadcast("serverPing", data.serverId);
-                break;
-            case 'refreshRepeatedMessage':
-                $rootScope.$broadcast("refreshRepeatedMessage", data);
-                break;
+        $rootScope.$on('socketOnMessage', function (event, response) {
+            var data = jQuery.parseJSON(response.data);
+            switch (data.command) {
+                case 'sendMessage':
+                    $rootScope.$broadcast("sendMessage", data);
+                    $rootScope.$broadcast("serverPing", data.value.server_id);
+                    break;
+                case 'refresh':
+                    $rootScope.$broadcast("refresh", data);
+                    break;
+                case 'lazyMessagesDownload':
+                    $rootScope.$broadcast("lazyMessagesDownload", data);
+                    break;
+                case 'addRepeatedMessage':
+                    $rootScope.$broadcast("addRepeatedMessage", data);
+                    break;
+                case 'serverPing':
+                    $rootScope.$broadcast("serverPing", data.serverId);
+                    break;
+                case 'refreshRepeatedMessage':
+                    $rootScope.$broadcast("refreshRepeatedMessage", data);
+                    break;
 
-        }
+            }
+        });
+        return {};
+
     });
-    return { };
-
 });

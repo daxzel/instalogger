@@ -44,7 +44,8 @@
                 <div class="modal-footer">
                     <button class="btn btn-primary"
                             ng-show="!repeatedMessage.name.$error.maxlength"
-                            ng-click="ok(name)">OK</button>
+                            ng-click="ok(name)">OK
+                    </button>
                     <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
                 </div>
             </div>
@@ -55,7 +56,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body">
-                    <div class="alert"  ng-class="getClassOfAlert(message)">
+                    <div class="alert" ng-class="getClassOfAlert(message)">
                         <div class="btn-group btn-group-xs">
                             <button type="button" class="btn btn-default btn-xs" clip-copy="message.text"
                                     ng-show="isError(message)">
@@ -65,8 +66,8 @@
                         <span class="instalogger-message-text"><log-message message="message"/></span>
                     </div>
                 </div>
-                </div>
             </div>
+        </div>
         </div>
     </script>
 
