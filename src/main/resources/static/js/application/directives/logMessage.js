@@ -23,7 +23,7 @@ define(['instaloggerApp'], function (instaloggerApp) {
     }
 
 
-    instaloggerApp.directive('logMessage', function ($http, $compile) {
+    instaloggerApp.directive('logMessage', function ($http, $compile, logLevels) {
         return {
             restrict: 'E',
             replace: true,
@@ -33,7 +33,7 @@ define(['instaloggerApp'], function (instaloggerApp) {
             },
             link: function (scope, element) {
                 var message = scope.message;
-                if (isError(message)) {
+                if (logLevels.isError(message)) {
                     var strings = scope.message.text.split('\n');
                     var result = [];
                     result.push('[');

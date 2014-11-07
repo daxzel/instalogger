@@ -1,7 +1,6 @@
 define(['angular-modules'], function() {
 
     var instaloggerApp = angular.module('instaloggerApp', ['ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap']);
-        //'ui.bootstrap',
         //'ngClipboard']);
 
     if (typeof String.prototype.startsWith != 'function') {
@@ -14,10 +13,6 @@ define(['angular-modules'], function() {
         String.prototype.contains = function (str) {
             return this.indexOf(str) != -1;
         };
-    }
-
-    function isError(message) {
-        return (message.log_level == 40000);
     }
 
     return instaloggerApp;

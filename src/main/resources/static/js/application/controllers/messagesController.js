@@ -27,7 +27,7 @@ define(['instaloggerApp', 'tinycon'], function (instaloggerApp, tiny) {
                 });
             };
 
-            $scope.logLevels = logLevels;
+            $scope.logLevels = logLevels.values;
 
             $scope.$on('socketOnClose', function () {
                 $modal.open({
@@ -39,7 +39,7 @@ define(['instaloggerApp', 'tinycon'], function (instaloggerApp, tiny) {
 
 
             $scope.isError = function (message) {
-                return isError(message);
+                return logLevels.isError(message);
             };
 
             $scope.removeRepeatedMessage = function (repeatedMessage) {

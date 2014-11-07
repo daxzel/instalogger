@@ -1,5 +1,5 @@
 define(['instaloggerApp'], function (instaloggerApp) {
-    instaloggerApp.factory('unreadErrorMessages', function ($rootScope) {
+    instaloggerApp.factory('unreadErrorMessages', function ($rootScope, logLevels) {
 
         var unreadErrorMessages = {
             messages: {},
@@ -20,7 +20,7 @@ define(['instaloggerApp'], function (instaloggerApp) {
 
         $rootScope.$on("sendMessage", function (event, data) {
             var message = data.value;
-            if (isError(message)) {
+            if (logLevels.isError(message)) {
                 unreadErrorMessages.add(message);
             }
         });
